@@ -15,14 +15,26 @@ import org.mindrot.jbcrypt.BCrypt.{hashpw, checkpw, gensalt}
 object Application extends Controller {
   val salt = """$2a$10$zXdoVN2Xci3bRB8UwnEL7u"""
 
+  case class LoginForm(name: String, password: String)
+
+  val loginForm = Form(
+    mapping(
+      "name" -> nonEmptyText,
+      "password" -> nonEmptyText
+    )(LoginForm.apply)(LoginForm.unapply)
+  )
+
   case class RegisterForm(name: String, mail: String, password: String)
 
   val registerForm = Form(
     mapping(
       "name" -> nonEmptyText,
       "mail" -> email,
-      "password" -> nonEmptyText
-    )(RegisterForm.apply)(RegisterForm.unapply)
+      "password" -> tuple("main" -> nonEmptyText(minLength = 8), "confirm" -> text).verifying(
+        "Passwords don't match", passwords => passwords._1 == passwords._2
+      )
+    ){(name, mail, passwords) => RegisterForm(name, mail, passwords._1)}
+    { form => Some(form.name, form.mail, (form.password, ""))}
   )
 
   def index = Action {
@@ -51,6 +63,15 @@ object Application extends Controller {
         MemberTable.insert(user)
 
         Redirect(routes.Application.debug)
+      }
+    )
+  }
+
+  def login = DBAction.transaction { implicit rs =>
+    loginForm.bindFromRequest.fold(
+      error => Redirect(routes.Application.index),
+      form => {
+        Redirect(routes.Application.index)
       }
     )
   }
