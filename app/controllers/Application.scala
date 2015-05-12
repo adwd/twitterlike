@@ -10,7 +10,10 @@ import profile.simple._
 import play.api.data._
 import play.api.data.Forms._
 
+import org.mindrot.jbcrypt.BCrypt.{hashpw, checkpw, gensalt}
+
 object Application extends Controller {
+  val salt = """$2a$10$zXdoVN2Xci3bRB8UwnEL7u"""
 
   case class RegisterForm(name: String, mail: String, password: String)
 
@@ -44,7 +47,7 @@ object Application extends Controller {
       form => {
         // ユーザを登録
         val timestamp = new Timestamp(System.currentTimeMillis())
-        val user = MemberTableRow(form.name, None, form.password, form.mail, timestamp, timestamp)
+        val user = MemberTableRow(form.name, None, hashpw(form.password, salt), form.mail, timestamp, Some(timestamp))
         MemberTable.insert(user)
 
         Redirect(routes.Application.debug)
