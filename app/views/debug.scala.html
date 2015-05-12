@@ -1,0 +1,34 @@
+@(members: List[models.Tables.MemberTableRow])
+
+@main("デバッグ表示") {
+
+    <div class="col-xs-6">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>メールアドレス</th>
+                    <th>名前</th>
+                    <th>パスワード</th>
+                    <th>作成日時</th>
+                    <th>更新日時</th>
+                    <th>&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody>
+                @* ユーザの一覧をループで出力 *@
+                @members.map { member =>
+                    <tr>
+                        <td>@member.memberId</td>
+                        <td>@member.memberMailAddress</td>
+                        <td>@member.memberName</td>
+                        <td>@member.memberPassword</td>
+                        <td>@member.timestampCreated</td>
+                        <td>@member.timestampUpdated</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+}
