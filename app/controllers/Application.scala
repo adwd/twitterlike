@@ -13,7 +13,6 @@ import play.api.data.Forms._
 import org.mindrot.jbcrypt.BCrypt.{hashpw, checkpw, gensalt}
 
 object Application extends Controller {
-  val salt = """$2a$10$zXdoVN2Xci3bRB8UwnEL7u"""
 
   case class LoginForm(name: String, password: String)
 
@@ -33,12 +32,12 @@ object Application extends Controller {
       "password" -> tuple("main" -> nonEmptyText(minLength = 8), "confirm" -> text).verifying(
         "Passwords don't match", passwords => passwords._1 == passwords._2
       )
-    ){(name, mail, passwords) => RegisterForm(name, mail, passwords._1)}
-    { form => Some(form.name, form.mail, (form.password, ""))}
+    ){ (name, mail, passwords) => RegisterForm(name, mail, passwords._1)}
+    { form => Some(form.name, form.mail, (form.password, form.password))}
   )
 
   def index = Action {
-    Ok(views.html.index(registerForm))
+    Ok(views.html.index(loginForm))
   }
 
   /**
@@ -51,15 +50,22 @@ object Application extends Controller {
   }
 
   /**
+   * 会員登録ページ表示
+   */
+  def registry = Action {
+    Ok(views.html.registry(registerForm))
+  }
+
+  /**
    * 登録実行
    */
   def create = DBAction.transaction { implicit rs =>
     registerForm.bindFromRequest.fold(
-      error => Redirect(routes.Application.index),
+      error => BadRequest(views.html.registry(error)),
       form => {
         // ユーザを登録
         val timestamp = new Timestamp(System.currentTimeMillis())
-        val user = MemberTableRow(form.name, None, hashpw(form.password, salt), form.mail, timestamp, Some(timestamp))
+        val user = MemberTableRow(form.name, None, hashpw(form.password, gensalt()), form.mail, timestamp, timestamp)
         MemberTable.insert(user)
 
         Redirect(routes.Application.debug)

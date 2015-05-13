@@ -9,5 +9,7 @@ GET         /                    controllers.Application.index
 GET         /assets/*file        controllers.Assets.at(path="/public", file)
 
 GET         /debug               controllers.Application.debug
+
+GET         /registry            controllers.Application.registry
 POST        /create              controllers.Application.create
 POST        /login               controllers.Application.login

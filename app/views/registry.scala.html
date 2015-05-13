@@ -1,0 +1,29 @@
+@(registerForm: Form[controllers.Application.RegisterForm])
+
+@import helper._
+
+@main("Welcome to Play") {
+
+    @form(action = routes.Application.create, args = 'class -> "container", 'role -> "form") {
+        <fieldset>
+            <p>ユーザー登録</p>
+            <div class="form-group">
+            @inputText(registerForm("name"), '_label -> "名前")
+            </div>
+            <div class="form-group">
+            @inputText(registerForm("mail"), '_label -> "メールアドレス")
+            </div>
+            <div class="form-group">
+            @inputPassword(registerForm("password.main"), '_label -> "パスワード")
+            </div>
+            <div class="form-group">
+            @inputPassword(registerForm("password.confirm"), '_label -> "パスワード確認")
+            </div>
+
+
+            <div>
+                <input type="submit" value="保存" class="btn btn-success"/>
+            </div>
+        </fieldset>
+    }
+}
