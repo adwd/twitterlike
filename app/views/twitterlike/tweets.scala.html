@@ -1,9 +1,42 @@
-@()
+@(tweets: List[models.Tables.TweetTableRow], tweetForm: Form[controllers.Tweets.TweetForm])
 
 @import helper._
 
 @main("main tweets view"){
-    <h1>test</h1>
+
+    @form(action = routes.Tweets.tweet(), args = 'class -> "container", 'role -> "form") {
+        <fieldset>
+            <div class="form-group">
+                @textarea(tweetForm("tweet"), 'label -> "つぶやく")
+                <input type="hidden" value="@tweetForm("memberId").value" name="memberId" />
+            </div>
+            <div>
+                <input type="submit" value="送信" class="btn btn-success"/>
+            </div>
+        </fieldset>
+    }
+
+    <div class="col-xs-6">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>ツイート</th>
+                    <th>日時</th>
+                    <th>&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody>
+                @tweets.map { tweet =>
+                    <tr>
+                        <td>@tweet.memberId</td>
+                        <td>@tweet.text</td>
+                        <td>@tweet.timestampCreated</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
     @form(action = routes.Application.logout, args = 'class -> "container", 'role -> "form") {
         <div>

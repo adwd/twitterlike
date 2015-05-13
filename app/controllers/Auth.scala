@@ -7,6 +7,7 @@ import models.Tables._
 
 import play.api.mvc._
 import play.api.mvc.Results._
+import play.api.db.slick._
 import play.api.Play.current
 
 import scala.reflect._
@@ -71,7 +72,7 @@ trait AuthConfigImpl extends AuthConfig {
    * 任意の処理を記述してください。
    */
   def resolveUser(id: Id)(implicit ctx: ExecutionContext): Future[Option[User]] = {
-    val user = play.api.db.slick.DB.withSession { implicit session =>
+    val user = DB.withSession { implicit session =>
       MemberTable.filter(_.memberId === id).firstOption
     }
 

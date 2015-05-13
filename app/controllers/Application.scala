@@ -34,7 +34,7 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
     mapping(
       "name" -> nonEmptyText,
       "mail" -> email,
-      "password" -> tuple("main" -> nonEmptyText(minLength = 8), "confirm" -> text).verifying(
+      "password" -> tuple("main" -> nonEmptyText(minLength = 2), "confirm" -> text).verifying(
         "Passwords don't match", passwords => passwords._1 == passwords._2
       )
     ){ (name, mail, passwords) => RegisterForm(name, mail, passwords._1)}
@@ -47,7 +47,7 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
    */
   def index = StackAction { implicit request =>
     if(loggedIn.isDefined)
-      Ok(views.html.twitterlike.tweets())
+      Tweets.showTweets(loggedIn.get)
     else
       Ok(views.html.index(loginForm))
   }
@@ -57,8 +57,9 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
    */
   def debug = DBAction.transaction { implicit rs =>
     val members = MemberTable.sortBy(_.timestampCreated).list
+    val tweets = TweetTable.sortBy(_.timestampCreated).list
 
-    Ok(views.html.debug(members))
+    Ok(views.html.debug(members, tweets))
   }
 
   /**

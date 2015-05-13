@@ -117,9 +117,6 @@ trait Tables {
     
     /** Foreign key referencing MemberTable (database name tweet_table_ibfk_1) */
     lazy val memberTableFk = foreignKey("tweet_table_ibfk_1", memberId, MemberTable)(r => r.memberId, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
-    
-    /** Uniqueness Index over (memberId) (database name MEMBER_ID) */
-    val index1 = index("MEMBER_ID", memberId, unique=true)
   }
   /** Collection-like TableQuery object for table TweetTable */
   lazy val TweetTable = new TableQuery(tag => new TweetTable(tag))

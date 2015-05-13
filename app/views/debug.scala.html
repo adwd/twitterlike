@@ -1,4 +1,4 @@
-@(members: List[models.Tables.MemberTableRow])
+@(members: List[models.Tables.MemberTableRow], tweets: List[models.Tables.TweetTableRow])
 
 @main("デバッグ表示") {
 
@@ -31,4 +31,7 @@
         </table>
     </div>
 
+    <hr/>
+
+    @parts.tweets(tweets)
 }

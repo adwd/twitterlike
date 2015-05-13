@@ -18,3 +18,4 @@ POST        /authenticate        controllers.Application.authenticate
 POST        /logout              controllers.Application.logout
 
 GET         /main                controllers.Tweets.main
+POST        /tweet               controllers.Tweets.tweet
