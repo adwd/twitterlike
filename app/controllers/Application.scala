@@ -2,6 +2,7 @@ package controllers
 
 import java.sql.Timestamp
 
+import jp.t2v.lab.play2.auth.{OptionalAuthElement, LoginLogout}
 import play.api.mvc._
 import play.api.db.slick._
 import models.Tables._
@@ -12,7 +13,11 @@ import play.api.data.Forms._
 
 import org.mindrot.jbcrypt.BCrypt.{hashpw, checkpw, gensalt}
 
-object Application extends Controller {
+import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
+
+object Application extends Controller with LoginLogout with OptionalAuthElement with AuthConfigImpl {
 
   case class LoginForm(name: String, password: String)
 
@@ -36,8 +41,15 @@ object Application extends Controller {
     { form => Some(form.name, form.mail, (form.password, form.password))}
   )
 
-  def index = Action {
-    Ok(views.html.index(loginForm))
+  /**
+   * ログインしていたらメイン画面、ログインしていなければログイン画面
+   * @return
+   */
+  def index = StackAction { implicit request =>
+    if(loggedIn.isDefined)
+      Ok(views.html.twitterlike.tweets())
+    else
+      Ok(views.html.index(loginForm))
   }
 
   /**
@@ -67,18 +79,23 @@ object Application extends Controller {
         val timestamp = new Timestamp(System.currentTimeMillis())
         val user = MemberTableRow(form.name, None, hashpw(form.password, gensalt()), form.mail, timestamp, timestamp)
         MemberTable.insert(user)
-
-        Redirect(routes.Application.debug)
+        Await.result(gotoLoginSucceeded(form.name), Duration.Inf)
       }
     )
   }
 
   def login = DBAction.transaction { implicit rs =>
+    Ok(views.html.index(loginForm))
+  }
+
+  def logout = Action.async { implicit request =>
+    gotoLogoutSucceeded
+  }
+
+  def authenticate = Action.async { implicit request =>
     loginForm.bindFromRequest.fold(
-      error => Redirect(routes.Application.index),
-      form => {
-        Redirect(routes.Application.index)
-      }
+      error => Future.successful(Redirect(routes.Tweets.main())),
+      form => gotoLoginSucceeded(form.name)
     )
   }
 

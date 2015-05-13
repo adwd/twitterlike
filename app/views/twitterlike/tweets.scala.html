@@ -1,0 +1,13 @@
+@()
+
+@import helper._
+
+@main("main tweets view"){
+    <h1>test</h1>
+
+    @form(action = routes.Application.logout, args = 'class -> "container", 'role -> "form") {
+        <div>
+            <input type="submit" value="ログアウト" class="btn btn-success"/>
+        </div>
+    }
+}
