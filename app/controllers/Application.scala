@@ -46,9 +46,9 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
 
   val registerForm = Form(
     mapping(
-      "name" -> nonEmptyText,
-      "mail" -> email,
-      "password" -> tuple("main" -> nonEmptyText(minLength = 2), "confirm" -> text).verifying(
+      "name" -> nonEmptyText(maxLength = 30),
+      "mail" -> email.verifying("40文字までのメールアドレスを入力してください", mail => mail.length < 40),
+      "password" -> tuple("main" -> nonEmptyText(minLength = 2, maxLength = 20), "confirm" -> text).verifying(
         "Passwords don't match", passwords => passwords._1 == passwords._2
       )
     ){ (name, mail, passwords) => RegisterForm(name, mail, passwords._1)}
