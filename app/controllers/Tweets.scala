@@ -28,11 +28,15 @@ object Tweets extends Controller with AuthElement with AuthConfigImpl {
   }
 
   def showTweets[T](user: MemberTableRow)(implicit request: Request[T]) = {
-    val tweets = DB.withSession { implicit session =>
-      TweetTable.filter(_.memberId === user.memberId).list
-    }
+    DB.withSession { implicit session =>
+      val tweets = TweetTable.filter(_.memberId === user.memberId).list
 
-    Ok(views.html.twitterlike.tweets(tweets, tweetForm.fill(TweetForm("", user.memberId))))
+      val followingTable = FollowTable.filter(_.memberId === user.memberId).list
+      val recommended = MemberTable.withFilter(followingTable.contains(_)).take(5).list
+      val followingmembers = MemberTable.withFilter(followingTable.contains(_)).take(10).list
+
+      Ok(views.html.twitterlike.tweets(user, tweets, recommended, followingmembers, tweetForm.fill(TweetForm("", user.memberId))))
+    }
   }
 
   def tweet = DBAction { implicit request =>
