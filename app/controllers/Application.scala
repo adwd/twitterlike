@@ -27,8 +27,20 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
     mapping(
       "name" -> nonEmptyText,
       "password" -> nonEmptyText
-    )(LoginForm.apply)(LoginForm.unapply)
+    )(LoginForm.apply)(LoginForm.unapply) verifying("ユーザー名またはパスワードが違います", form => form match {
+      case login => validate(login)
+    })
   )
+
+  def validate(loginForm: LoginForm) = {
+    DB.withSession { implicit session =>
+      MemberTable
+        .filter(_.memberId === loginForm.name)
+        .firstOption
+        .map(member => checkpw(loginForm.password, member.encryptedPassword))
+        .getOrElse(false)
+    }
+  }
 
   case class RegisterForm(name: String, mail: String, password: String)
 
@@ -103,7 +115,12 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
 
   def authenticate = Action.async { implicit request =>
     loginForm.bindFromRequest.fold(
-      error => Future.successful(Redirect(routes.Tweets.main())),
+      error => {
+        DB.withSession { implicit session =>
+          val recents = TweetTable.sortBy(_.timestampCreated).take(10).list
+          Future.successful(BadRequest(views.html.index(error, recents)))
+        }
+      },
       form => gotoLoginSucceeded(form.name)
     )
   }
@@ -112,15 +129,11 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
     if(loggedIn.isDefined){
       val userId = loggedIn.get.memberId
       DB.withSession { implicit session =>
-        if(MemberTable.filter(_.memberId === id).exists.run) {
-          if(!FollowTable.filter(flw => flw.memberId === userId && flw.followedId === id).exists.run) {
-            val timestamp = new Timestamp(System.currentTimeMillis())
-            val follow = FollowTableRow(id, userId, timestamp ,timestamp)
-            FollowTable.insert(follow)
-            Ok("follow success")
-          } else {
-            BadRequest("NG")
-          }
+        if(MemberTable.filter(_.memberId === id).exists.run && !FollowTable.filter(flw => flw.memberId === userId && flw.followedId === id).exists.run) {
+          val timestamp = new Timestamp(System.currentTimeMillis())
+          val follow = FollowTableRow(id, userId, timestamp ,timestamp)
+          FollowTable.insert(follow)
+          Ok("follow success")
         } else {
           BadRequest("NG")
         }
