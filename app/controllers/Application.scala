@@ -64,8 +64,9 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
   def debug = DBAction.transaction { implicit rs =>
     val members = MemberTable.sortBy(_.timestampCreated).list
     val tweets = TweetTable.sortBy(_.timestampCreated).list
+    val follows = FollowTable.sortBy(_.timestampCreated).list
 
-    Ok(views.html.debug(members, tweets))
+    Ok(views.html.debug(members, tweets, follows))
   }
 
   /**
@@ -105,6 +106,28 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
       error => Future.successful(Redirect(routes.Tweets.main())),
       form => gotoLoginSucceeded(form.name)
     )
+  }
+
+  def follow(id: String) = StackAction { implicit request =>
+    if(loggedIn.isDefined){
+      val userId = loggedIn.get.memberId
+      DB.withSession { implicit session =>
+        if(MemberTable.filter(_.memberId === id).exists.run) {
+          if(!FollowTable.filter(flw => flw.memberId === userId && flw.followedId === id).exists.run) {
+            val timestamp = new Timestamp(System.currentTimeMillis())
+            val follow = FollowTableRow(id, userId, timestamp ,timestamp)
+            FollowTable.insert(follow)
+            Ok("follow success")
+          } else {
+            BadRequest("NG")
+          }
+        } else {
+          BadRequest("NG")
+        }
+      }
+    } else {
+      BadRequest("NG")
+    }
   }
 
 }

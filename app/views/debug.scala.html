@@ -1,4 +1,4 @@
-@(members: List[models.Tables.MemberTableRow], tweets: List[models.Tables.TweetTableRow])
+@(members: List[models.Tables.MemberTableRow], tweets: List[models.Tables.TweetTableRow], follows: List[models.Tables.FollowTableRow])
 
 @main("デバッグ表示") {
 
@@ -34,4 +34,26 @@
     <hr/>
 
     @parts.tweets(tweets)
+
+
+    <div class="col-xs-6">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>フォローしているユーザー</th>
+                    <th>フォローされているユーザー</th>
+                    <th>&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody>
+                @* ユーザの一覧をループで出力 *@
+                @follows.map { follow =>
+                    <tr>
+                        <td>@follow.memberId</td>
+                        <td>@follow.followedId</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }

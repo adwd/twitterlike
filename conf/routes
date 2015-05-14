@@ -19,3 +19,5 @@ POST        /logout              controllers.Application.logout
 
 GET         /main                controllers.Tweets.main
 POST        /tweet               controllers.Tweets.tweet
+
+POST        /follow/:id          controllers.Application.follow(id: String)

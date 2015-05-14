@@ -29,11 +29,24 @@ object Tweets extends Controller with AuthElement with AuthConfigImpl {
 
   def showTweets[T](user: MemberTableRow)(implicit request: Request[T]) = {
     DB.withSession { implicit session =>
-      val tweets = TweetTable.filter(_.memberId === user.memberId).list
-
-      val followingTable = FollowTable.filter(_.memberId === user.memberId).list
-      val recommended = MemberTable.withFilter(followingTable.contains(_)).take(5).list
-      val followingmembers = MemberTable.withFilter(followingTable.contains(_)).take(10).list
+      // TODO: ちゃんとしたSQLクエリにするとか
+      // FollowTableのフォローしているユーザーが現在のユーザーである行
+      val followingMember = FollowTable
+        .filter(_.memberId === user.memberId)
+        .list
+      val tweets = TweetTable
+        .filter(tweet => tweet.memberId === user.memberId || followingMember.map(_.followedId).exists(tweet.memberId == _))
+        .list
+      // MemberTableのmemberIdが、FollowTableのfollowedIdに含まれていない
+      val recommended = MemberTable
+        .withFilter(member => !followingMember.map(_.followedId).contains(member.memberId))
+        .filterNot(_.memberId === user.memberId)
+        .take(5)
+        .list
+      val followingmembers = MemberTable
+        .withFilter(member => followingMember.map(_.followedId).contains(member.memberId))
+        .take(10)
+        .list
 
       Ok(views.html.twitterlike.tweets(user, tweets, recommended, followingmembers, tweetForm.fill(TweetForm("", user.memberId))))
     }
