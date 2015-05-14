@@ -1,4 +1,4 @@
-@(loginForm: Form[controllers.Application.LoginForm])
+@(loginForm: Form[controllers.Application.LoginForm], recents: List[models.Tables.TweetTableRow])
 
 @import helper._
 
@@ -26,4 +26,6 @@
         <input type="submit" value="新規登録" class="btn btn-success"/>
     }
 
+    <p>最新のツイート</p>
+    @parts.tweets(recents)
 }

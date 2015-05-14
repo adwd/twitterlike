@@ -17,6 +17,8 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 
+import play.api.Play.current
+
 object Application extends Controller with LoginLogout with OptionalAuthElement with AuthConfigImpl {
 
   case class LoginForm(name: String, password: String)
@@ -48,8 +50,12 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
   def index = StackAction { implicit request =>
     if(loggedIn.isDefined)
       Tweets.showTweets(loggedIn.get)
-    else
-      Ok(views.html.index(loginForm))
+    else {
+      val recents = DB.withSession { implicit session =>
+        TweetTable.sortBy(_.timestampCreated).take(10).list
+      }
+      Ok(views.html.index(loginForm, recents))
+    }
   }
 
   /**
@@ -86,7 +92,8 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
   }
 
   def login = DBAction.transaction { implicit rs =>
-    Ok(views.html.index(loginForm))
+    val recents = TweetTable.sortBy(_.timestampCreated).take(10).list
+    Ok(views.html.index(loginForm, recents))
   }
 
   def logout = Action.async { implicit request =>
