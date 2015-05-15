@@ -2,6 +2,7 @@ package controllers
 
 import java.sql.Timestamp
 
+import models.Tables
 import play.api.data._
 import play.api.data.Forms._
 import play.api.mvc._
@@ -30,25 +31,34 @@ object Tweets extends Controller with AuthElement with AuthConfigImpl {
   def showTweets[T](user: MemberTableRow)(implicit request: Request[T]) = {
     DB.withSession { implicit session =>
       // TODO: ちゃんとしたSQLクエリにするとか
-      // FollowTableのフォローしているユーザーが現在のユーザーである行
-      val followingMember = FollowTable
-        .filter(_.memberId === user.memberId)
-        .list
+
+      val followings = for {
+        follow <- FollowTable
+        if follow.memberId === user.memberId
+      } yield follow
+
+      val members = {
+        for {
+          member <- MemberTable
+          isfollowed = member.memberId.inSet(followings.map(_.followedId).list)
+        } yield (member, isfollowed)
+      }
+
       val tweets = TweetTable
-        .filter(tweet => tweet.memberId === user.memberId || followingMember.map(_.followedId).exists(tweet.memberId == _))
-        .list
-      // MemberTableのmemberIdが、FollowTableのfollowedIdに含まれていない
-      val recommended = MemberTable
-        .withFilter(member => !followingMember.map(_.followedId).contains(member.memberId))
-        .filterNot(_.memberId === user.memberId)
-        .take(5)
-        .list
-      val followingmembers = MemberTable
-        .withFilter(member => followingMember.map(_.followedId).contains(member.memberId))
-        .take(10)
+        .filter(tweet => tweet.memberId === user.memberId || followings.map(_.followedId).filter(tweet.memberId === _).exists)
         .list
 
-      Ok(views.html.twitterlike.tweets(user, tweets, recommended, followingmembers, tweetForm.fill(TweetForm("", user.memberId))))
+      val recommends = members
+        .filter(_._2 === false)
+        .map(_._1)
+        .filter(_.memberId =!= user.memberId)
+        .list
+      val followed = members
+        .filter(_._2 === true)
+        .map(_._1)
+        .list
+
+      Ok(views.html.tweets(user,tweets, recommends, followed, tweetForm.fill(TweetForm("", user.memberId))))
     }
   }
 
