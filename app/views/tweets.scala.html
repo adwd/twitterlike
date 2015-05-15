@@ -9,6 +9,8 @@
     <div class="row">
         <div class="col-md-8">
 
+            <div class="box">
+
             @form(action = routes.Tweets.tweet()) {
                 <fieldset>
                     <div class="form-group col-md-7">
@@ -21,8 +23,12 @@
                     </div>
                 </fieldset>
             }
+            </div>
+
+            <div class="box">
 
             @parts.followingTweets(tweets)
+            </div>
 
         </div>
         <div class="col-md-4">
