@@ -8,7 +8,7 @@ $(function(){
       api_key : 'f19913083f594fe98f448414cbd25b84', // 必須 :: API Key
       sort : 'date-posted-desc', // 任意 :: 並べ替え
       tags : 'landscape', // 任意 :: タグで検索
-      per_page : '10', // 任意 :: 1回あたりの取得件数
+      per_page : '50', // 任意 :: 1回あたりの取得件数
       license: '4' // CC BY 2.0のライセンス
     },
     dataType : 'jsonp',
@@ -21,7 +21,7 @@ function _getFlickrPhotos(data){
   var dataStat  = data.stat;
   if(dataStat == 'ok'){
     // success
-    var item = data.photos.photo[Math.floor( Math.random() * 10 )];
+    var item = data.photos.photo[Math.floor( Math.random() * 50 )];
     var itemFarm = item.farm;
     var itemServer = item.server;
     var itemID = item.id;
