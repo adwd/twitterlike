@@ -131,7 +131,7 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
       DB.withSession { implicit session =>
         if(MemberTable.filter(_.memberId === id).exists.run && !FollowTable.filter(flw => flw.memberId === userId && flw.followedId === id).exists.run) {
           val timestamp = new Timestamp(System.currentTimeMillis())
-          val follow = FollowTableRow(id, userId, timestamp ,timestamp)
+          val follow = FollowTableRow(0, id, userId, timestamp ,timestamp)
           FollowTable.insert(follow)
           Ok("follow success")
         } else {

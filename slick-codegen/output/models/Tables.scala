@@ -17,24 +17,27 @@ trait Tables {
   lazy val ddl = FollowTable.ddl ++ MemberTable.ddl ++ TweetTable.ddl
   
   /** Entity class storing rows of table FollowTable
-   *  @param followedId Database column FOLLOWED_ID DBType(VARCHAR), PrimaryKey, Length(30,true)
+   *  @param id Database column ID DBType(BIGINT), AutoInc
+   *  @param followedId Database column FOLLOWED_ID DBType(VARCHAR), Length(30,true)
    *  @param memberId Database column MEMBER_ID DBType(VARCHAR), Length(30,true)
    *  @param timestampCreated Database column TIMESTAMP_CREATED DBType(TIMESTAMP)
    *  @param timestampUpdated Database column TIMESTAMP_UPDATED DBType(TIMESTAMP) */
-  case class FollowTableRow(followedId: String, memberId: String, timestampCreated: java.sql.Timestamp, timestampUpdated: java.sql.Timestamp)
+  case class FollowTableRow(id: Long, followedId: String, memberId: String, timestampCreated: java.sql.Timestamp, timestampUpdated: java.sql.Timestamp)
   /** GetResult implicit for fetching FollowTableRow objects using plain SQL queries */
-  implicit def GetResultFollowTableRow(implicit e0: GR[String], e1: GR[java.sql.Timestamp]): GR[FollowTableRow] = GR{
+  implicit def GetResultFollowTableRow(implicit e0: GR[Long], e1: GR[String], e2: GR[java.sql.Timestamp]): GR[FollowTableRow] = GR{
     prs => import prs._
-    FollowTableRow.tupled((<<[String], <<[String], <<[java.sql.Timestamp], <<[java.sql.Timestamp]))
+    FollowTableRow.tupled((<<[Long], <<[String], <<[String], <<[java.sql.Timestamp], <<[java.sql.Timestamp]))
   }
   /** Table description of table FOLLOW_TABLE. Objects of this class serve as prototypes for rows in queries. */
   class FollowTable(_tableTag: Tag) extends Table[FollowTableRow](_tableTag, "FOLLOW_TABLE") {
-    def * = (followedId, memberId, timestampCreated, timestampUpdated) <> (FollowTableRow.tupled, FollowTableRow.unapply)
+    def * = (id, followedId, memberId, timestampCreated, timestampUpdated) <> (FollowTableRow.tupled, FollowTableRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (followedId.?, memberId.?, timestampCreated.?, timestampUpdated.?).shaped.<>({r=>import r._; _1.map(_=> FollowTableRow.tupled((_1.get, _2.get, _3.get, _4.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (id.?, followedId.?, memberId.?, timestampCreated.?, timestampUpdated.?).shaped.<>({r=>import r._; _1.map(_=> FollowTableRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
     
-    /** Database column FOLLOWED_ID DBType(VARCHAR), PrimaryKey, Length(30,true) */
-    val followedId: Column[String] = column[String]("FOLLOWED_ID", O.PrimaryKey, O.Length(30,varying=true))
+    /** Database column ID DBType(BIGINT), AutoInc */
+    val id: Column[Long] = column[Long]("ID", O.AutoInc)
+    /** Database column FOLLOWED_ID DBType(VARCHAR), Length(30,true) */
+    val followedId: Column[String] = column[String]("FOLLOWED_ID", O.Length(30,varying=true))
     /** Database column MEMBER_ID DBType(VARCHAR), Length(30,true) */
     val memberId: Column[String] = column[String]("MEMBER_ID", O.Length(30,varying=true))
     /** Database column TIMESTAMP_CREATED DBType(TIMESTAMP) */
@@ -42,11 +45,14 @@ trait Tables {
     /** Database column TIMESTAMP_UPDATED DBType(TIMESTAMP) */
     val timestampUpdated: Column[java.sql.Timestamp] = column[java.sql.Timestamp]("TIMESTAMP_UPDATED")
     
+    /** Primary key of FollowTable (database name FOLLOW_TABLE_PK) */
+    val pk = primaryKey("FOLLOW_TABLE_PK", (id, followedId))
+    
     /** Foreign key referencing MemberTable (database name follow_table_ibfk_1) */
     lazy val memberTableFk = foreignKey("follow_table_ibfk_1", memberId, MemberTable)(r => r.memberId, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
     
-    /** Uniqueness Index over (memberId) (database name MEMBER_ID) */
-    val index1 = index("MEMBER_ID", memberId, unique=true)
+    /** Uniqueness Index over (id) (database name ID) */
+    val index1 = index("ID", id, unique=true)
   }
   /** Collection-like TableQuery object for table FollowTable */
   lazy val FollowTable = new TableQuery(tag => new FollowTable(tag))

@@ -3,8 +3,8 @@
  * @param id
  */
 function disableButton(id) {
-  var buttonId = '.follow-button#' + id;
-  $(buttonId).prop("disabled", true);
+  var button = $('.follow-button#' + id);
+  button.prop("hidden", true);
 }
 
 /**
@@ -12,7 +12,10 @@ function disableButton(id) {
  */
 function appendButton(id) {
 
-  //$("#following-user-table").insertRow();
+  $("#following-user-table").append(
+    $("<tr></tr>")
+      .append($("<td></td>").text(id))
+  );
 }
 
 /**
