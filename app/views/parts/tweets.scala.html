@@ -1,23 +1,25 @@
 @(tweets: List[models.Tables.TweetTableRow])
 
-<div class="col-xs-7 box">
-    <table class="table table-hover">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>ツイート</th>
-                <th>日時</th>
-                <th>&nbsp;</th>
-            </tr>
-        </thead>
-        <tbody>
-        @tweets.map { tweet =>
-            <tr>
-                <td>@tweet.memberId</td>
-                <td>@tweet.text</td>
-                <td>@tweet.timestampCreated</td>
-            </tr>
-        }
-        </tbody>
-    </table>
+<div class="row">
+    <div class="col-xs-7">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>ツイート</th>
+                    <th>日時</th>
+                    <th>&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody>
+                @tweets.map { tweet =>
+                    <tr>
+                        <td>@tweet.memberId</td>
+                        <td>@tweet.text</td>
+                        <td>@tweet.timestampCreated</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>
