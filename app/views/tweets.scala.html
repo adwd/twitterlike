@@ -16,7 +16,7 @@
                     <div class="form-group col-md-7">
                         @textarea(tweetForm("tweet"), 'label -> "つぶやく", 'id -> "tweetarea")
                         <input type="hidden" value="@tweetForm("memberId").value" name="memberId" />
-                        <div id="tweetcount"></div>
+                        <div id="tweetcount">0</div>
                     </div>
                     <div class="col-md-1">
                         <input type="submit" value="送信" class="btn btn-success"/>
@@ -25,9 +25,8 @@
             }
             </div>
 
-            <div class="box">
-
-            @parts.followingTweets(tweets)
+            <div>
+                @parts.tweets(tweets)
             </div>
 
         </div>

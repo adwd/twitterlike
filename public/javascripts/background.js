@@ -21,17 +21,12 @@ function _getFlickrPhotos(data){
   var dataStat  = data.stat;
   if(dataStat == 'ok'){
     // success
-    var item = data.photos.photo[Math.floor( Math.random() * 50 )];
-    var itemFarm = item.farm;
-    var itemServer = item.server;
-    var itemID = item.id;
-    var itemSecret = item.secret;
-    var itemTitle = item.title;
-    var itemLink = 'https://www.flickr.com/photos/' + item.owner + '/' + itemID;
-    var photoPath = 'https://farm' + itemFarm + '.static.flickr.com/' + itemServer + '/' + itemID + '_' + itemSecret + '_b.jpg';
+    var index =Math.floor( Math.random() * 50 );
+    var item = data.photos.photo[index];
+    var itemLink = 'https://www.flickr.com/photos/' + item.owner + '/' + item.id;
+    var photoPath = 'https://farm' + item.farm + '.static.flickr.com/' + item.server + '/' + item.id + '_' + item.secret + '_b.jpg';
     var footer = $("#flickr-license")[0];
-    footer.innerHTML = '<a href="' + itemLink + '">' + itemTitle + '</a>';
-    //$("#flickr-license a").attr("href", itemLink);
+    footer.innerHTML = '<a href="' + itemLink + '">' + item.title + '</a>';
     $.backstretch(photoPath);
   }else{
     // fail

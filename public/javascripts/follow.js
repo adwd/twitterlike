@@ -31,7 +31,7 @@ $(
               disableButton(userToFollow);
               appendButton(userToFollow);
             })
-            .fail(function() { alert("フォローできませんでした。すでにフォローしているかもしれません。"); });
+            .fail(function() { alert("フォローに失敗しました。"); });
       }
     );
   }
