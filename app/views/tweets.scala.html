@@ -9,7 +9,7 @@
     <div class="row">
         <div class="col-md-8">
 
-            @form(action = routes.Tweets.tweet(), args = 'class -> "container", 'role -> "form") {
+            @form(action = routes.Tweets.tweet()) {
                 <fieldset>
                     <div class="form-group col-md-7">
                         @textarea(tweetForm("tweet"), 'label -> "つぶやく", 'id -> "tweetarea")
@@ -27,14 +27,14 @@
         </div>
         <div class="col-md-4">
 
-            <div id="account-info">
+            <div id="account-info" class="box">
 
                 <p>あなたのアカウント</p>
                 <p>@user.memberId</p>
                 <p>@user.mailAddress</p>
                 <p>@user.timestampCreated</p>
 
-                @form(action = routes.Application.logout, args = 'class -> "container", 'role -> "form") {
+                @form(action = routes.Application.logout) {
                     <div>
                         <input type="submit" value="ログアウト" class="btn btn-success"/>
                     </div>
@@ -42,21 +42,21 @@
 
             </div>
 
-            <div id="recommended-user">
+            <div id="recommended-user" class="box">
                 <p>おすすめのユーザー</p>
                 <table class="table table-hover" id="recommended-user-table">
                     <tbody>
                     @recommended.map { member =>
                         <tr>
                             <td>@member.memberId</td>
-                            <td><button class="follow-button" id="@member.memberId">follow</button></td>
+                            <td><button class="follow-button" id="@member.memberId" data-toggle="popover" data-trigger="focus" title="@(member.memberId + " をフォローしました")" data-content="follow">follow</button></td>
                         </tr>
                     }
                     </tbody>
                 </table>
             </div>
 
-            <div id="following-user">
+            <div id="following-user" class="box">
                 <p>フォローしているユーザー</p>
                 <table class="table table-hover" id="following-user-table">
                     <tbody>
