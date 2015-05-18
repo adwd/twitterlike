@@ -31,8 +31,6 @@ CREATE TABLE MEMBER_TABLE
 (
 	-- ユニークなユーザー名
 	MEMBER_ID varchar(30) NOT NULL COMMENT 'ユニークなユーザー名',
-	-- ユニークでないユーザ名
-	NAME varchar(30) COMMENT 'ユニークでないユーザ名',
 	-- 暗号化されたパスワード
 	ENCRYPTED_PASSWORD varchar(60) NOT NULL COMMENT '暗号化されたパスワード',
 	-- メールアドレス

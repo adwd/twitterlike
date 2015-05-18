@@ -59,27 +59,24 @@ trait Tables {
   
   /** Entity class storing rows of table MemberTable
    *  @param memberId Database column MEMBER_ID DBType(VARCHAR), PrimaryKey, Length(30,true)
-   *  @param name Database column NAME DBType(VARCHAR), Length(30,true), Default(None)
    *  @param encryptedPassword Database column ENCRYPTED_PASSWORD DBType(VARCHAR), Length(60,true)
    *  @param mailAddress Database column MAIL_ADDRESS DBType(VARCHAR), Length(40,true)
    *  @param timestampCreated Database column TIMESTAMP_CREATED DBType(TIMESTAMP)
    *  @param timestampUpdated Database column TIMESTAMP_UPDATED DBType(TIMESTAMP) */
-  case class MemberTableRow(memberId: String, name: Option[String] = None, encryptedPassword: String, mailAddress: String, timestampCreated: java.sql.Timestamp, timestampUpdated: java.sql.Timestamp)
+  case class MemberTableRow(memberId: String, encryptedPassword: String, mailAddress: String, timestampCreated: java.sql.Timestamp, timestampUpdated: java.sql.Timestamp)
   /** GetResult implicit for fetching MemberTableRow objects using plain SQL queries */
-  implicit def GetResultMemberTableRow(implicit e0: GR[String], e1: GR[Option[String]], e2: GR[java.sql.Timestamp]): GR[MemberTableRow] = GR{
+  implicit def GetResultMemberTableRow(implicit e0: GR[String], e1: GR[java.sql.Timestamp]): GR[MemberTableRow] = GR{
     prs => import prs._
-    MemberTableRow.tupled((<<[String], <<?[String], <<[String], <<[String], <<[java.sql.Timestamp], <<[java.sql.Timestamp]))
+    MemberTableRow.tupled((<<[String], <<[String], <<[String], <<[java.sql.Timestamp], <<[java.sql.Timestamp]))
   }
   /** Table description of table MEMBER_TABLE. Objects of this class serve as prototypes for rows in queries. */
   class MemberTable(_tableTag: Tag) extends Table[MemberTableRow](_tableTag, "MEMBER_TABLE") {
-    def * = (memberId, name, encryptedPassword, mailAddress, timestampCreated, timestampUpdated) <> (MemberTableRow.tupled, MemberTableRow.unapply)
+    def * = (memberId, encryptedPassword, mailAddress, timestampCreated, timestampUpdated) <> (MemberTableRow.tupled, MemberTableRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (memberId.?, name, encryptedPassword.?, mailAddress.?, timestampCreated.?, timestampUpdated.?).shaped.<>({r=>import r._; _1.map(_=> MemberTableRow.tupled((_1.get, _2, _3.get, _4.get, _5.get, _6.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (memberId.?, encryptedPassword.?, mailAddress.?, timestampCreated.?, timestampUpdated.?).shaped.<>({r=>import r._; _1.map(_=> MemberTableRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
     
     /** Database column MEMBER_ID DBType(VARCHAR), PrimaryKey, Length(30,true) */
     val memberId: Column[String] = column[String]("MEMBER_ID", O.PrimaryKey, O.Length(30,varying=true))
-    /** Database column NAME DBType(VARCHAR), Length(30,true), Default(None) */
-    val name: Column[Option[String]] = column[Option[String]]("NAME", O.Length(30,varying=true), O.Default(None))
     /** Database column ENCRYPTED_PASSWORD DBType(VARCHAR), Length(60,true) */
     val encryptedPassword: Column[String] = column[String]("ENCRYPTED_PASSWORD", O.Length(60,varying=true))
     /** Database column MAIL_ADDRESS DBType(VARCHAR), Length(40,true) */

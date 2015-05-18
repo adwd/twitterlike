@@ -29,6 +29,11 @@ object Tweets extends Controller with AuthElement with AuthConfigImpl {
   }
 
   def showTweets[T](user: MemberTableRow)(implicit request: Request[T]) = {
+      val (tw, rec, fl) = tweetImpl(user)
+      Ok(views.html.tweets(user, tw, rec, fl, tweetForm.fill(TweetForm("", user.memberId))))
+  }
+
+  def tweetImpl(user: User) = {
     DB.withSession { implicit session =>
       // TODO: ちゃんとしたSQLクエリにするとか
 
@@ -58,7 +63,7 @@ object Tweets extends Controller with AuthElement with AuthConfigImpl {
         .map(_._1)
         .list
 
-      Ok(views.html.tweets(user,tweets, recommends, followed, tweetForm.fill(TweetForm("", user.memberId))))
+      (tweets, recommends, followed)
     }
   }
 

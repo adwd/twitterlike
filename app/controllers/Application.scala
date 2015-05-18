@@ -97,7 +97,7 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
       form => {
         // ユーザを登録
         val timestamp = new Timestamp(System.currentTimeMillis())
-        val user = MemberTableRow(form.name, None, hashpw(form.password, gensalt()), form.mail, timestamp, timestamp)
+        val user = MemberTableRow(form.name, hashpw(form.password, gensalt()), form.mail, timestamp, timestamp)
         MemberTable.insert(user)
         Await.result(gotoLoginSucceeded(form.name), Duration.Inf)
       }

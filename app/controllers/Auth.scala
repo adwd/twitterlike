@@ -4,6 +4,7 @@ import controllers.Role.{NormalUser, Administrator}
 import jp.t2v.lab.play2.auth.{CookieTokenAccessor, AuthConfig}
 
 import models.Tables._
+import play.Logger
 
 import play.api.mvc._
 import play.api.mvc.Results._
@@ -82,8 +83,10 @@ trait AuthConfigImpl extends AuthConfig {
   /**
    * ログインが成功した際に遷移する先を指定します。
    */
-  def loginSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] =
+  def loginSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] = {
+    Logger.debug(s"login succeeded $request")
     Future.successful(Redirect(routes.Tweets.main()))
+  }
 
   /**
    * ログアウトが成功した際に遷移する先を指定します。
@@ -94,8 +97,10 @@ trait AuthConfigImpl extends AuthConfig {
   /**
    * 認証が失敗した場合に遷移する先を指定します。
    */
-  def authenticationFailed(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] =
+  def authenticationFailed(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] = {
+    Logger.debug(s"authentication failed $request")
     Future.successful(Redirect(routes.Application.index()))
+  }
 
   /**
    * 認可(権限チェック)が失敗した場合に遷移する先を指定します。
