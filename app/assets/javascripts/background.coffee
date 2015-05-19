@@ -5,9 +5,11 @@ getFlickrPhotos = (data) ->
     item = data.photos.photo[index]
     itemLink = "https://www.flickr.com/photos/#{item.owner}/#{item.id}"
     photoPath = "https://farm#{item.farm}.static.flickr.com/#{item.server}/#{item.id}_#{item.secret}_b.jpg"
+
+    flickrbox = $("#flickr-box")[0].style.visibility = "visible"
     footer = $("#flickr-license")[0]
     footer.innerHTML = '<a href="' + itemLink + '">' + item.title + '</a>'
-    $.backstretch(photoPath)
+    $.backstretch(photoPath, {fade: 1000})
 
 $ ->
   $.ajax
