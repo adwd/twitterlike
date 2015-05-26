@@ -22,3 +22,4 @@ GET         /assets/*file            controllers.Assets.at(path="/public", file)
 POST        /api/authenticate        controllers.Api.authenticate
 GET         /api/recents             controllers.Api.recents
 GET         /api/tweets              controllers.Api.tweets
+POST        /api/follow/:id          controllers.Api.follow(id: String)
