@@ -10,6 +10,7 @@ import play.api.mvc._
 import play.api.mvc.Results._
 import play.api.db.slick._
 import play.api.Play.current
+import play.api.libs.json._
 
 import scala.reflect._
 import scala.concurrent.{ExecutionContext, Future}
@@ -91,8 +92,13 @@ trait AuthConfigImpl extends AuthConfig {
   /**
    * ログアウトが成功した際に遷移する先を指定します。
    */
-  def logoutSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] =
-    Future.successful(Redirect(routes.Application.index()))
+  def logoutSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] = {
+    Logger.debug(s"logout succeeded $request")
+    if(request.path.contains("api"))
+      Future.successful(Ok(Json.obj("status" -> "OK", "message" -> "logout succeeded")))
+    else
+      Future.successful(Redirect(routes.Application.index()))
+  }
 
   /**
    * 認証が失敗した場合に遷移する先を指定します。

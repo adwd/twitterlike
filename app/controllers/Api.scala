@@ -73,4 +73,8 @@ object Api extends Controller with LoginLogout with OptionalAuthElement with Aut
       BadRequest(Json.obj("status" -> "NG", "message" -> "login first."))
     }
   }
+
+  def logout = Action.async { implicit request =>
+    gotoLogoutSucceeded
+  }
 }
