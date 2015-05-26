@@ -24,3 +24,4 @@ GET         /api/recents             controllers.Api.recents
 GET         /api/tweets              controllers.Api.tweets
 POST        /api/follow/:id          controllers.Api.follow(id: String)
 POST        /api/logout              controllers.Api.logout
+POST        /api/tweet               controllers.Api.tweet

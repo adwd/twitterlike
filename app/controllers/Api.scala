@@ -77,4 +77,15 @@ object Api extends Controller with LoginLogout with OptionalAuthElement with Aut
   def logout = Action.async { implicit request =>
     gotoLogoutSucceeded
   }
+
+  def tweet = StackAction(parse.json, AuthorityKey -> NormalUser) { implicit req =>
+    loggedIn.map{ user =>
+      val text = req.body.\("text").as[String]
+      val timestamp = new Timestamp(System.currentTimeMillis())
+      val tweet = TweetTableRow(0, Some(text), user.memberId, timestamp, timestamp)
+      DB.withSession( implicit session => TweetTable.insert(tweet))
+      val (tw, _, _) = tweetImpl(user)
+      Ok(Json.toJson(tw))
+    }.getOrElse(BadRequest(Json.obj("status" -> "NG", "message" -> "tweet failed.")))
+  }
 }
