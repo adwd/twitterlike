@@ -23,6 +23,7 @@ object Api extends Controller with LoginLogout with OptionalAuthElement with Aut
 
   implicit val tweetWrites = Json.writes[TweetTableRow]
   implicit val loginReads = Json.reads[LoginForm]
+  implicit val memberWrites = Json.writes[MemberTableRow]
 
   def loginValidate(jsValue: JsValue): JsResult[LoginForm] = {
     loginReads.reads(jsValue).map( form =>
@@ -87,5 +88,12 @@ object Api extends Controller with LoginLogout with OptionalAuthElement with Aut
       val (tw, _, _) = tweetImpl(user)
       Ok(Json.toJson(tw))
     }.getOrElse(BadRequest(Json.obj("status" -> "NG", "message" -> "tweet failed.")))
+  }
+
+  def recommends = StackAction(AuthorityKey -> NormalUser) { implicit req =>
+    loggedIn.map { user =>
+      val (_, recommends, _) = tweetImpl(user)
+      Ok(Json.toJson(recommends))
+    }.getOrElse(BadRequest(Json.obj("status" -> "NG", "message" -> "failed to recommend.")))
   }
 }
