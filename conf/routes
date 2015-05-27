@@ -26,3 +26,4 @@ POST        /api/follow/:id          controllers.Api.follow(id: String)
 POST        /api/logout              controllers.Api.logout
 POST        /api/tweet               controllers.Api.tweet
 GET         /api/recommends          controllers.Api.recommends
+POST        /api/create              controllers.Api.create

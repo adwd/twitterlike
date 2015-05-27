@@ -10,9 +10,11 @@ import play.api.db.slick._
 import models.Tables._
 import play.api.libs.json._
 import profile.simple._
-
+import play.api.data._
+import play.api.data.Forms._
 import org.mindrot.jbcrypt.BCrypt.{hashpw, checkpw, gensalt}
 
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -30,7 +32,8 @@ object Api extends Controller with LoginLogout with OptionalAuthElement with Aut
       DB.withSession{ implicit session =>
         MemberTable
           .filter(_.memberId === form.name)
-          .firstOption.find(member => checkpw(form.password, member.encryptedPassword))
+          .firstOption
+          .find(member => checkpw(form.password, member.encryptedPassword))
           .map(member => JsSuccess(form))
           .getOrElse(JsError(Seq()))
     }).getOrElse(JsError(Seq()))
@@ -95,5 +98,51 @@ object Api extends Controller with LoginLogout with OptionalAuthElement with Aut
       val (_, recommends, _) = tweetImpl(user)
       Ok(Json.toJson(recommends))
     }.getOrElse(BadRequest(Json.obj("status" -> "NG", "message" -> "failed to recommend.")))
+  }
+
+  case class MemberData(name: String, pass: String, mail: String)
+  val memberDataConstraints = Form(
+    mapping(
+      "name" -> nonEmptyText.verifying("user name must be less than 30 characters", _.length < 30),
+      "pass" -> nonEmptyText,
+      "mail" -> email.verifying("Email address must be less than 40 characters", _.length <= 40)
+    )(MemberData.apply)(MemberData.unapply)
+  )
+
+  def create = DBAction.transaction(parse.json) { implicit request =>
+    def isMemberNameUnique(name: String): Either[String, String] = {
+      MemberTable
+        .filter(_.memberId === name)
+        .firstOption
+        .map(m => "user name already exists")
+        .toLeft("user name available")
+    }
+
+    def memberDataValidate(n: String, p: String, m: String): Either[String, String] = {
+      memberDataConstraints.bind(Map("name" -> n, "pass" -> p, "mail" -> m)).fold(
+        error => Left(error.errors.map(_.message).mkString(", ")),
+        form => Right(n))
+    }
+
+    val values = Seq("name", "password", "mail")
+      .map(request.body.\(_).asOpt[String])
+
+    val insertMember: Either[String, String] = for{
+      name      <- values(0).toRight("invalid json. path 'name' required.").right
+      password  <- values(1).toRight("invalid json. path 'password' required.").right
+      mail      <- values(2).toRight("invalid json. path 'mail' required.").right
+      _         <- isMemberNameUnique(name).right
+      _         <- memberDataValidate(name, password, mail).right
+    } yield {
+      val timestamp = new Timestamp(System.currentTimeMillis())
+      val user = MemberTableRow(name, hashpw(password, gensalt()), mail, timestamp, timestamp)
+      MemberTable.insert(user)
+      user.memberId
+    }
+
+    insertMember
+      .fold(
+        errorMessage => BadRequest(Json.obj("status" -> "NG", "message" -> errorMessage)),
+        memberName => Await.result(gotoLoginSucceeded(memberName), Duration.Inf))
   }
 }
