@@ -40,8 +40,8 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
   }
 
   def authenticate = Action.async(BodyParsers.parse.json) { implicit request =>
-      loginValidate(request.body).fold(
-      errors => Future.successful(BadRequest(Json.obj("status" -> "NG", "message" -> "authenticate failed."))),
+    loginValidate(request.body).fold(
+      errors => Future.successful(BadRequest("authentication failed.")),
       login => gotoLoginSucceeded(login.name)
     )
   }
@@ -58,15 +58,22 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
 
   def follow(name: String) = StackAction(AuthorityKey -> NormalUser) { implicit req =>
     DB.withSession { implicit session =>
-      TweetTable
-        .filter(_.memberId === loggedIn.memberId)
+      MemberTable
+        .filter(_.memberId === name)
         .firstOption
-        .map { member =>
-          val timestamp = new Timestamp(System.currentTimeMillis())
-          val follow = FollowTableRow(0, name, loggedIn.memberId, timestamp, timestamp)
-          FollowTable.insert(follow)
-          Ok(Json.obj("status" -> "OK", "message" -> s"followed ${member.memberId}"))
-        }.getOrElse(BadRequest(Json.obj("status" -> "NG", "message" -> s"user: $name not found.")))
+        .map( tofollow =>
+          FollowTable
+            .filter(_.memberId === loggedIn.memberId)
+            .filter(_.followedId === name)
+            .firstOption
+            .map(member => BadRequest(s"you already followed user: $name"))
+            .getOrElse{
+              val timestamp = new Timestamp(System.currentTimeMillis())
+              val follow = FollowTableRow(0, name, loggedIn.memberId, timestamp, timestamp)
+              FollowTable.insert(follow)
+              Ok(s"followed $name")
+          }
+        ).getOrElse(BadRequest(s"user: $name not found."))
     }
   }
 
@@ -81,7 +88,7 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
       DB.withSession(implicit session => TweetTable.insert(tweet))
       val (tw, _, _) = tweetImpl(loggedIn)
       Ok(Json.toJson(tw))
-    }.getOrElse(BadRequest(Json.obj("status" -> "NG", "message" -> "path 'text' required")))
+    }.getOrElse(BadRequest("path 'text' required"))
   }
 
   def recommends = StackAction(AuthorityKey -> NormalUser) { implicit req =>
@@ -131,7 +138,7 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
 
     insertMember
       .fold(
-        errorMessage => BadRequest(Json.obj("status" -> "NG", "message" -> errorMessage)),
+        errorMessage => BadRequest(errorMessage),
         memberName => Await.result(gotoLoginSucceeded(memberName), Duration.Inf))
   }
 }

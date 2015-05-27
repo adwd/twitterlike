@@ -155,7 +155,7 @@ trait AuthConfigImplJson extends AuthConfigImplCommon {
    */
   def loginSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] = {
     Logger.debug(s"login succeeded $request")
-    Future.successful(Ok(Json.obj("status" -> "OK", "message" -> "login succeeded")))
+    Future.successful(Ok("login succeeded"))
   }
 
   /**
@@ -163,7 +163,7 @@ trait AuthConfigImplJson extends AuthConfigImplCommon {
    */
   def logoutSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] = {
     Logger.debug(s"logout succeeded $request")
-    Future.successful(Ok(Json.obj("status" -> "OK", "message" -> "logout succeeded")))
+    Future.successful(Ok("logout succeeded"))
   }
 
   /**
@@ -171,14 +171,14 @@ trait AuthConfigImplJson extends AuthConfigImplCommon {
    */
   def authenticationFailed(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] = {
     Logger.debug(s"authentication failed $request")
-    Future.successful(BadRequest(Json.obj("status" -> "NG", "message" -> "authentication failed")))
+    Future.successful(BadRequest("authentication failed"))
   }
 
   /**
    * 認可(権限チェック)が失敗した場合に遷移する先を指定します。
    */
   override def authorizationFailed(request: RequestHeader, user: User, authority: Option[Authority])(implicit context: ExecutionContext): Future[Result] = {
-    Future.successful(Forbidden(Json.obj("status" -> "NG", "message" -> "authorization failed")))
+    Future.successful(Forbidden("authorization failed"))
   }
 
 }

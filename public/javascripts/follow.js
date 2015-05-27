@@ -26,12 +26,12 @@ $(
     $('.follow-button').click(
       function() {
         var userToFollow = this.id;
-          $.post("/follow/" + userToFollow)
-            .done(function() {
-              disableButton(userToFollow);
-              appendButton(userToFollow);
-            })
-            .fail(function() { alert("フォローに失敗しました。"); });
+        $.post("/follow/" + userToFollow)
+          .done(function() {
+            disableButton(userToFollow);
+            appendButton(userToFollow);
+          })
+          .fail(function() { alert("フォローに失敗しました。"); });
       }
     );
   }
