@@ -61,19 +61,32 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
       MemberTable
         .filter(_.memberId === name)
         .firstOption
-        .map( tofollow =>
+        .fold(BadRequest(s"user: $name not found."))( tofollow =>
           FollowTable
             .filter(_.memberId === loggedIn.memberId)
             .filter(_.followedId === name)
             .firstOption
-            .map(member => BadRequest(s"you already followed user: $name"))
-            .getOrElse{
+            .fold{
               val timestamp = new Timestamp(System.currentTimeMillis())
               val follow = FollowTableRow(0, name, loggedIn.memberId, timestamp, timestamp)
               FollowTable.insert(follow)
               Ok(s"followed $name")
-          }
-        ).getOrElse(BadRequest(s"user: $name not found."))
+          }(member => BadRequest(s"you already followed user: $name"))
+        )
+    }
+  }
+
+  def unfollow(name: String) = StackAction(AuthorityKey -> NormalUser) { implicit req =>
+    val ret = DB.withSession( implicit session =>
+      FollowTable
+        .filter(x => x.followedId === name && x.memberId === loggedIn.memberId)
+        // delete: Intの戻り値でdeleteを実行すると削除されたカラムの数を返す？
+        .delete
+    )
+    if(ret != 0){
+      Ok(s"you unfollowed user: $name")
+    } else {
+      BadRequest(s"you are not following, or user: $name is not exist")
     }
   }
 
@@ -82,13 +95,13 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
   }
 
   def tweet = StackAction(parse.json, AuthorityKey -> NormalUser) { implicit req =>
-    req.body.\("text").asOpt[String].map { (text: String) =>
+    req.body.\("text").asOpt[String].fold(BadRequest("path 'text' required")) { text =>
       val timestamp = new Timestamp(System.currentTimeMillis())
       val tweet = TweetTableRow(0, Some(text), loggedIn.memberId, timestamp, timestamp)
       DB.withSession(implicit session => TweetTable.insert(tweet))
       val (tw, _, _) = tweetImpl(loggedIn)
       Ok(Json.toJson(tw))
-    }.getOrElse(BadRequest("path 'text' required"))
+    }
   }
 
   def recommends = StackAction(AuthorityKey -> NormalUser) { implicit req =>

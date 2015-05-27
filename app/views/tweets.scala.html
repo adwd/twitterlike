@@ -55,7 +55,7 @@
                     @recommended.map { member =>
                         <tr>
                             <td>@member.memberId</td>
-                            <td><button class="follow-button" id="@member.memberId" data-toggle="popover" data-trigger="focus" title="@(member.memberId + " をフォローしました")" data-content="follow">follow</button></td>
+                            <td width="250"><button class="follow-button" id="@member.memberId" data-toggle="popover" data-trigger="focus" title="@(member.memberId + " をフォローしました")" data-content="follow">follow</button></td>
                         </tr>
                     }
                     </tbody>
@@ -69,6 +69,9 @@
                     @following.map { member =>
                         <tr>
                             <td>@member.memberId</td>
+                            <td width="250">
+                                <button class="unfollow-button" id="@member.memberId" data-toggle="popover" data-trigger="focus" title="@(member.memberId + " をアンフォローしました")" data-content="unfollow">unfollow</button>
+                            </td>
                         </tr>
                     }
                     </tbody>

@@ -126,21 +126,38 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
   }
 
   def follow(id: String) = StackAction { implicit request =>
-    if(loggedIn.isDefined){
-      val userId = loggedIn.get.memberId
+    loggedIn.fold(BadRequest("NG")){ user =>
       DB.withSession { implicit session =>
-        if(MemberTable.filter(_.memberId === id).exists.run && !FollowTable.filter(flw => flw.memberId === userId && flw.followedId === id).exists.run) {
+        if(MemberTable.filter(_.memberId === id).exists.run && !FollowTable.filter(flw => flw.memberId === user.memberId && flw.followedId === id).exists.run) {
           val timestamp = new Timestamp(System.currentTimeMillis())
-          val follow = FollowTableRow(0, id, userId, timestamp ,timestamp)
+          val follow = FollowTableRow(0, id, user.memberId, timestamp ,timestamp)
           FollowTable.insert(follow)
           Ok("follow success")
         } else {
           BadRequest("NG")
         }
       }
-    } else {
-      BadRequest("NG")
     }
+  }
+
+  def unfollow(id: String) = StackAction { implicit request =>
+    loggedIn.fold(BadRequest("you are not logged in"))( user =>
+      DB.withSession{ implicit session =>
+        MemberTable
+          .filter(_.memberId === id)
+          .firstOption
+          .fold(BadRequest(s"$user is not exist.")){ x =>
+            val ret = FollowTable
+              .filter(f => f.memberId === user.memberId &&
+                           f.followedId === id)
+              .delete
+            if (ret != 0) {
+              Ok("unfollow success")
+            } else {
+              BadRequest(s"you are not following $id")
+            }
+        }
+      })
   }
 
 }

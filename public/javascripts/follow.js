@@ -1,26 +1,15 @@
-/**
- * フォローボタンを押して、フォローボタンを無効化する
- * @param id
- */
-function disableButton(id) {
+function followed(id) {
   var button = $('.follow-button#' + id);
-  button.prop("hidden", true);
+  button.prop("disabled", true);
+  button[0].textContent = "フォローしました";
 }
 
-/**
- * フォローされたユーザーをリストに追加する
- */
-function appendButton(id) {
-
-  $("#following-user-table").append(
-    $("<tr></tr>")
-      .append($("<td></td>").text(id))
-  );
+function unfollowed(id) {
+  var button = $('.unfollow-button#' + id);
+  button.prop("disabled", true);
+  button[0].textContent = "アンフォローしました";
 }
 
-/**
- * follow-buttonクラスのbuttonをクリックすると、idに設定された文字列を使って/follow/:idにPOSTする
- */
 $(
   function() {
     $('.follow-button').click(
@@ -28,10 +17,20 @@ $(
         var userToFollow = this.id;
         $.post("/follow/" + userToFollow)
           .done(function() {
-            disableButton(userToFollow);
-            appendButton(userToFollow);
+            followed(userToFollow);
           })
           .fail(function() { alert("フォローに失敗しました。"); });
+      }
+    );
+
+    $('.unfollow-button').click(
+      function() {
+        var userToUnfollow = this.id;
+        $.post("/unfollow/" + userToUnfollow)
+          .done(function() {
+            unfollowed(userToUnfollow);
+          })
+          .fail(function() { alert("アンフォローに失敗しました。"); });
       }
     );
   }
