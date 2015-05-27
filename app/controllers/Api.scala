@@ -21,7 +21,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.Play.current
 import controllers.Application._
 
-object Api extends Controller with LoginLogout with OptionalAuthElement with AuthConfigImpl {
+object Api extends Controller with LoginLogout with AuthElement with AuthConfigImplJson {
 
   implicit val tweetWrites = Json.writes[TweetTableRow]
   implicit val loginReads = Json.reads[LoginForm]
@@ -52,29 +52,21 @@ object Api extends Controller with LoginLogout with OptionalAuthElement with Aut
   }
 
   def tweets = StackAction(AuthorityKey -> NormalUser) { implicit request =>
-    loggedIn.map{ user =>
-      val (tw, _, _) = tweetImpl(loggedIn.get)
-      Ok(Json.toJson(tw))
-    }.getOrElse{
-      BadRequest(Json.obj("status" -> "NG", "message" -> "login first."))
-    }
+    val (tw, _, _) = tweetImpl(loggedIn)
+    Ok(Json.toJson(tw))
   }
 
   def follow(name: String) = StackAction(AuthorityKey -> NormalUser) { implicit req =>
-    loggedIn.map{ user =>
-      DB.withSession { implicit session =>
-        TweetTable
-          .filter(_.memberId === name)
-          .firstOption
-          .map { member =>
-            val timestamp = new Timestamp(System.currentTimeMillis())
-            val follow = FollowTableRow(0, name, user.memberId, timestamp, timestamp)
-            FollowTable.insert(follow)
-            Ok(Json.obj("status" -> "OK", "message" -> s"followed ${member.memberId}"))}
-          .getOrElse(BadRequest(Json.obj("status" -> "NG", "message" -> s"user: $name not found.")))
-      }
-    }.getOrElse{
-      BadRequest(Json.obj("status" -> "NG", "message" -> "login first."))
+    DB.withSession { implicit session =>
+      TweetTable
+        .filter(_.memberId === loggedIn.memberId)
+        .firstOption
+        .map { member =>
+          val timestamp = new Timestamp(System.currentTimeMillis())
+          val follow = FollowTableRow(0, name, loggedIn.memberId, timestamp, timestamp)
+          FollowTable.insert(follow)
+          Ok(Json.obj("status" -> "OK", "message" -> s"followed ${member.memberId}"))
+        }.getOrElse(BadRequest(Json.obj("status" -> "NG", "message" -> s"user: $name not found.")))
     }
   }
 
@@ -83,21 +75,18 @@ object Api extends Controller with LoginLogout with OptionalAuthElement with Aut
   }
 
   def tweet = StackAction(parse.json, AuthorityKey -> NormalUser) { implicit req =>
-    loggedIn.map{ user =>
-      val text = req.body.\("text").as[String]
+    req.body.\("text").asOpt[String].map { (text: String) =>
       val timestamp = new Timestamp(System.currentTimeMillis())
-      val tweet = TweetTableRow(0, Some(text), user.memberId, timestamp, timestamp)
-      DB.withSession( implicit session => TweetTable.insert(tweet))
-      val (tw, _, _) = tweetImpl(user)
+      val tweet = TweetTableRow(0, Some(text), loggedIn.memberId, timestamp, timestamp)
+      DB.withSession(implicit session => TweetTable.insert(tweet))
+      val (tw, _, _) = tweetImpl(loggedIn)
       Ok(Json.toJson(tw))
-    }.getOrElse(BadRequest(Json.obj("status" -> "NG", "message" -> "tweet failed.")))
+    }.getOrElse(BadRequest(Json.obj("status" -> "NG", "message" -> "path 'text' required")))
   }
 
   def recommends = StackAction(AuthorityKey -> NormalUser) { implicit req =>
-    loggedIn.map { user =>
-      val (_, recommends, _) = tweetImpl(user)
-      Ok(Json.toJson(recommends))
-    }.getOrElse(BadRequest(Json.obj("status" -> "NG", "message" -> "failed to recommend.")))
+    val (_, recommends, _) = tweetImpl(loggedIn)
+    Ok(Json.toJson(recommends))
   }
 
   case class MemberData(name: String, pass: String, mail: String)

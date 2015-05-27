@@ -16,7 +16,7 @@ import profile.simple._
 
 import jp.t2v.lab.play2.auth.AuthElement
 
-object Tweets extends Controller with AuthElement with AuthConfigImpl {
+object Tweets extends Controller with AuthElement with AuthConfigImplHtml {
 
   case class TweetForm(tweet: String, memberId: String)
 

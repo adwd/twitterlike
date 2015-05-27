@@ -35,7 +35,7 @@ object Role {
 
 }
 
-trait AuthConfigImpl extends AuthConfig {
+trait AuthConfigImplCommon extends AuthConfig {
 
   /**
    * ユーザを識別するIDの型です。String や Int や Long などが使われるでしょう。
@@ -82,40 +82,6 @@ trait AuthConfigImpl extends AuthConfig {
   }
 
   /**
-   * ログインが成功した際に遷移する先を指定します。
-   */
-  def loginSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] = {
-    Logger.debug(s"login succeeded $request")
-    Future.successful(Redirect(routes.Tweets.main()))
-  }
-
-  /**
-   * ログアウトが成功した際に遷移する先を指定します。
-   */
-  def logoutSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] = {
-    Logger.debug(s"logout succeeded $request")
-    if(request.path.contains("api"))
-      Future.successful(Ok(Json.obj("status" -> "OK", "message" -> "logout succeeded")))
-    else
-      Future.successful(Redirect(routes.Application.index()))
-  }
-
-  /**
-   * 認証が失敗した場合に遷移する先を指定します。
-   */
-  def authenticationFailed(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] = {
-    Logger.debug(s"authentication failed $request")
-    Future.successful(Redirect(routes.Application.index()))
-  }
-
-  /**
-   * 認可(権限チェック)が失敗した場合に遷移する先を指定します。
-   */
-  override def authorizationFailed(request: RequestHeader, user: User, authority: Option[Authority])(implicit context: ExecutionContext): Future[Result] = {
-    Future.successful(Forbidden("no permission"))
-  }
-
-  /**
    * 互換性の為に残されているメソッドです。
    * 将来のバージョンでは取り除かれる予定です。
    * authorizationFailed(RequestHeader, User, Option[Authority]) を override してください。
@@ -148,4 +114,71 @@ trait AuthConfigImpl extends AuthConfig {
     cookieSecureOption = play.api.Play.isProd(play.api.Play.current),
     cookieMaxAge       = Some(sessionTimeoutInSeconds)
   )
+}
+
+trait AuthConfigImplHtml extends AuthConfigImplCommon {
+  /**
+   * ログインが成功した際に遷移する先を指定します。
+   */
+  def loginSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] = {
+    Logger.debug(s"login succeeded $request")
+    Future.successful(Redirect(routes.Tweets.main()))
+  }
+
+  /**
+   * ログアウトが成功した際に遷移する先を指定します。
+   */
+  def logoutSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] = {
+    Logger.debug(s"logout succeeded $request")
+    Future.successful(Redirect(routes.Application.index()))
+  }
+
+  /**
+   * 認証が失敗した場合に遷移する先を指定します。
+   */
+  def authenticationFailed(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] = {
+    Logger.debug(s"authentication failed $request")
+    Future.successful(Redirect(routes.Application.index()))
+  }
+
+  /**
+   * 認可(権限チェック)が失敗した場合に遷移する先を指定します。
+   */
+  override def authorizationFailed(request: RequestHeader, user: User, authority: Option[Authority])(implicit context: ExecutionContext): Future[Result] = {
+    Future.successful(Forbidden("no permission"))
+  }
+}
+
+trait AuthConfigImplJson extends AuthConfigImplCommon {
+  /**
+   * ログインが成功した際に遷移する先を指定します。
+   */
+  def loginSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] = {
+    Logger.debug(s"login succeeded $request")
+    Future.successful(Ok(Json.obj("status" -> "OK", "message" -> "login succeeses")))
+  }
+
+  /**
+   * ログアウトが成功した際に遷移する先を指定します。
+   */
+  def logoutSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] = {
+    Logger.debug(s"logout succeeded $request")
+    Future.successful(Ok(Json.obj("status" -> "OK", "message" -> "logout succeeded")))
+  }
+
+  /**
+   * 認証が失敗した場合に遷移する先を指定します。
+   */
+  def authenticationFailed(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] = {
+    Logger.debug(s"authentication failed $request")
+    Future.successful(BadRequest(Json.obj("status" -> "NG", "message" -> "authentication failed")))
+  }
+
+  /**
+   * 認可(権限チェック)が失敗した場合に遷移する先を指定します。
+   */
+  override def authorizationFailed(request: RequestHeader, user: User, authority: Option[Authority])(implicit context: ExecutionContext): Future[Result] = {
+    Future.successful(Forbidden(Json.obj("status" -> "NG", "message" -> "authorization failed")))
+  }
+
 }

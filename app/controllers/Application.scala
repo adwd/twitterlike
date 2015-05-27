@@ -19,7 +19,7 @@ import scala.concurrent.duration.Duration
 
 import play.api.Play.current
 
-object Application extends Controller with LoginLogout with OptionalAuthElement with AuthConfigImpl {
+object Application extends Controller with LoginLogout with OptionalAuthElement with AuthConfigImplHtml {
 
   case class LoginForm(name: String, password: String)
 
