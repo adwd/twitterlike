@@ -155,7 +155,7 @@ trait AuthConfigImplJson extends AuthConfigImplCommon {
    */
   def loginSucceeded(request: RequestHeader)(implicit ctx: ExecutionContext): Future[Result] = {
     Logger.debug(s"login succeeded $request")
-    Future.successful(Ok(Json.obj("status" -> "OK", "message" -> "login succeeses")))
+    Future.successful(Ok(Json.obj("status" -> "OK", "message" -> "login succeeded")))
   }
 
   /**
