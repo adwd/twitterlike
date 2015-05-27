@@ -2,7 +2,6 @@ package controllers
 
 import java.sql.Timestamp
 
-import models.Tables
 import play.api.data._
 import play.api.data.Forms._
 import play.api.mvc._

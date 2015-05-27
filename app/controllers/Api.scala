@@ -4,7 +4,7 @@ import java.sql.Timestamp
 
 import controllers.Role.NormalUser
 import controllers.Tweets._
-import jp.t2v.lab.play2.auth.{AuthElement, OptionalAuthElement, LoginLogout}
+import jp.t2v.lab.play2.auth.{AuthElement, LoginLogout}
 import play.api.mvc._
 import play.api.db.slick._
 import models.Tables._
