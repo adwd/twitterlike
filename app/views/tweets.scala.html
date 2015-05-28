@@ -7,19 +7,21 @@
     <script src="@routes.Assets.at("javascripts/tweetcount.js")" type="text/javascript"></script>
     <script src="@routes.Assets.at("javascripts/follow.js")" type="text/javascript"></script>
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-9">
 
             <div class="box">
 
             @form(action = routes.Tweets.tweet()) {
                 <fieldset>
-                    <div class="form-group col-md-7">
-                        @textarea(tweetForm("tweet"), 'label -> "つぶやく", 'id -> "tweetarea")
-                        <input type="hidden" value="@tweetForm("memberId").value" name="memberId" />
-                        <div id="tweetcount">0</div>
-                    </div>
-                    <div class="col-md-1">
-                        <input type="submit" value="送信" class="btn btn-success"/>
+                    <div class="row">
+                        <div class="form-group col-md-9">
+                            @textarea(tweetForm("tweet"), 'label -> "つぶやく", 'id -> "tweetarea", 'class -> "tweetarea", 'rows -> "5")
+                            <input type="hidden" value="@tweetForm("memberId").value" name="memberId" />
+                            <div id="tweetcount">0</div>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="submit" value="送信" class="btn btn-success" id="button-tweet"/>
+                        </div>
                     </div>
                 </fieldset>
             }
@@ -31,14 +33,13 @@
             </div>
 
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
 
             <div id="account-info" class="box">
 
                 <p>あなたのアカウント</p>
                 <p>@user.memberId</p>
                 <p>@user.mailAddress</p>
-                <p>@user.timestampCreated</p>
 
                 @form(action = routes.Application.logout) {
                     <div>

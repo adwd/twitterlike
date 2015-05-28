@@ -95,12 +95,16 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
   }
 
   def tweet = StackAction(parse.json, AuthorityKey -> NormalUser) { implicit req =>
-    req.body.\("text").asOpt[String].fold(BadRequest("path 'text' required")) { text =>
-      val timestamp = new Timestamp(System.currentTimeMillis())
-      val tweet = TweetTableRow(0, Some(text), loggedIn.memberId, timestamp, timestamp)
-      DB.withSession(implicit session => TweetTable.insert(tweet))
-      val (tw, _, _) = tweetImpl(loggedIn)
-      Ok(Json.toJson(tw))
+    req.body.\("text").asOpt[String]
+      .filter(_.length <= 140)
+      .fold(
+        BadRequest("tweet failed. tweet too long ( > 140) or 'text' path does not exist in body json"))
+      { text =>
+        val timestamp = new Timestamp(System.currentTimeMillis())
+        val tweet = TweetTableRow(0, Some(text), loggedIn.memberId, timestamp, timestamp)
+        DB.withSession(implicit session => TweetTable.insert(tweet))
+        val (tw, _, _) = tweetImpl(loggedIn)
+        Ok(Json.toJson(tw))
     }
   }
 
@@ -108,15 +112,6 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
     val (_, recommends, _) = tweetImpl(loggedIn)
     Ok(Json.toJson(recommends))
   }
-
-  case class MemberData(name: String, pass: String, mail: String)
-  val memberDataConstraints = Form(
-    mapping(
-      "name" -> nonEmptyText.verifying("user name must be less than 30 characters", _.length < 30),
-      "pass" -> nonEmptyText,
-      "mail" -> email.verifying("Email address must be less than 40 characters", _.length <= 40)
-    )(MemberData.apply)(MemberData.unapply)
-  )
 
   def create = DBAction.transaction(parse.json) { implicit request =>
     def isMemberNameUnique(name: String): Either[String, String] = {
@@ -127,9 +122,24 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
         .toLeft("user name available")
     }
 
-    def memberDataValidate(n: String, p: String, m: String): Either[String, String] = {
-      memberDataConstraints.bind(Map("name" -> n, "pass" -> p, "mail" -> m)).fold(
-        error => Left(error.errors.map(_.message).mkString(", ")),
+    def memberDataValidate(n: String, m: String, p: String): Either[String, String] = {
+      val registerJson = Json.toJson(
+        Map(
+          "name" -> Json.toJson(n),
+          "mail" -> Json.toJson(m),
+          "password" -> Json.toJson(
+            Map(
+              "main" -> Json.toJson(p),
+              "confirm" -> Json.toJson(p)
+            )
+          )
+        )
+      )
+      registerForm.bind(registerJson).fold(
+        error => {
+          val formerr = error.errors.head
+          Left(s"error at field: ${formerr.key}, error messages: ${formerr.messages.mkString(", ")}" )
+        },
         form => Right(n))
     }
 
@@ -141,7 +151,7 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
       password  <- values(1).toRight("invalid json. path 'password' required.").right
       mail      <- values(2).toRight("invalid json. path 'mail' required.").right
       _         <- isMemberNameUnique(name).right
-      _         <- memberDataValidate(name, password, mail).right
+      _         <- memberDataValidate(name, mail, password).right
     } yield {
       val timestamp = new Timestamp(System.currentTimeMillis())
       val user = MemberTableRow(name, hashpw(password, gensalt()), mail, timestamp, timestamp)

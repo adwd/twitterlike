@@ -4,3 +4,16 @@ div.box{
     margin-tom: 12px;
     margin-bottom: 12px;
 }
+
+.tweet-table {
+    white-space: pre-line;
+}
+
+.tweet-id{
+    font-weight: bold;
+}
+
+textarea{
+    box-sizing: border-box;
+    width: 100%;
+}

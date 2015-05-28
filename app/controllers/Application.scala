@@ -25,8 +25,8 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
 
   val loginForm = Form(
     mapping(
-      "name" -> nonEmptyText,
-      "password" -> nonEmptyText
+      "name" -> text,
+      "password" -> text
     )(LoginForm.apply)(LoginForm.unapply) verifying("ユーザー名またはパスワードが違います", form => form match {
       case login => validate(login)
     })
@@ -37,8 +37,7 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
       MemberTable
         .filter(_.memberId === loginForm.name)
         .firstOption
-        .map(member => checkpw(loginForm.password, member.encryptedPassword))
-        .getOrElse(false)
+        .fold(false)(member => checkpw(loginForm.password, member.encryptedPassword))
     }
   }
 
@@ -46,10 +45,21 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
 
   val registerForm = Form(
     mapping(
-      "name" -> nonEmptyText(maxLength = 30),
-      "mail" -> email.verifying("40文字までのメールアドレスを入力してください", mail => mail.length < 40),
-      "password" -> tuple("main" -> nonEmptyText(minLength = 2, maxLength = 20), "confirm" -> text).verifying(
-        "Passwords don't match", passwords => passwords._1 == passwords._2
+      "name" -> text
+        .verifying("16文字までの名前を入力してください", n => !n.isEmpty && n.length <= 16)
+        .verifying("英数字、ハイフン、アンダーバーのみ使用できます", _.matches("""[a-zA-Z0-9_]+"""))
+        .verifying("既に使われているユーザー名です", name => DB.withSession{ implicit session =>
+          !MemberTable.filter(_.memberId === name).exists.run
+        }),
+      "mail" -> text
+        .verifying("40文字までのメールアドレスを入力してください", m => !m.isEmpty && m.length < 40)
+        .verifying("不正なE-mailアドレスです", _.matches("[\\w\\d_-]+@[\\w\\d_-]{2,}\\.[\\w\\d._-]{2,}")),
+      "password" ->
+          tuple(
+            "main" -> text
+              .verifying("2文字以上 20文字までのパスワードを入力してください", p => p.length >= 2 && p.length <= 20),
+            "confirm" -> text
+          ).verifying("パスワードが一致しません", pw => pw._1 == pw._2
       )
     ){ (name, mail, passwords) => RegisterForm(name, mail, passwords._1)}
     { form => Some(form.name, form.mail, (form.password, form.password))}

@@ -3,32 +3,35 @@
 @import helper._
 
 @main("Welcome to Play") {
+    <script src="@routes.Assets.at("javascripts/loginbutton.js")" type="text/javascript"></script>
 
-    <div class="row" style="background-image:url("https://farm8.staticflickr.com/7351/16186049017_7c441ffa78_o_d.jpg")">
-        <div class="col-md-8 box">
+    <div class="row">
+        <div class="col-md-9">
 
-            <div style="padding: 8px">
-                <p>最新のツイート</p>
+            <div class="box">
+                <div style="padding: 8px">
+                    <p>最新のツイート</p>
+                </div>
+                @parts.tweets(recents)
             </div>
-            @parts.tweets(recents)
 
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-3">
 
             @form(action = routes.Application.authenticate) {
                     <div class="box">
                         <p>ログイン</p>
                         <div>
-                        @inputText(loginForm("name"), 'label -> "名前")
+                        @inputText(loginForm("name"), '_label -> "名前", '_id -> "login-name")
                         </div>
                         <div>
-                        @inputPassword(loginForm("password"), 'label -> "パスワード")
+                        @inputPassword(loginForm("password"), '_label -> "パスワード", '_id -> "login-password")
                         </div>
 
 
                         <div>
-                            <input type="submit" value="保存" class="btn btn-success"/>
+                            <input type="submit" value="ログイン" class="btn btn-success" id="login-button"/>
                         </div>
                     </div>
             }
