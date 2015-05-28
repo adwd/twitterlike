@@ -95,12 +95,16 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
   }
 
   def tweet = StackAction(parse.json, AuthorityKey -> NormalUser) { implicit req =>
-    req.body.\("text").asOpt[String].fold(BadRequest("path 'text' required")) { text =>
-      val timestamp = new Timestamp(System.currentTimeMillis())
-      val tweet = TweetTableRow(0, Some(text), loggedIn.memberId, timestamp, timestamp)
-      DB.withSession(implicit session => TweetTable.insert(tweet))
-      val (tw, _, _) = tweetImpl(loggedIn)
-      Ok(Json.toJson(tw))
+    req.body.\("text").asOpt[String]
+      .filter(_.length <= 140)
+      .fold(
+        BadRequest("tweet failed. tweet too long ( > 140) or 'text' path does not exist in body json"))
+      { text =>
+        val timestamp = new Timestamp(System.currentTimeMillis())
+        val tweet = TweetTableRow(0, Some(text), loggedIn.memberId, timestamp, timestamp)
+        DB.withSession(implicit session => TweetTable.insert(tweet))
+        val (tw, _, _) = tweetImpl(loggedIn)
+        Ok(Json.toJson(tw))
     }
   }
 

@@ -1,3 +1,4 @@
+# JSONから50個の画像のうち一つをランダムで選び、画像、タイトル、リンクを表示する
 getFlickrPhotos = (data) ->
   dataStat  = data.stat
   if(dataStat == 'ok')
@@ -8,11 +9,12 @@ getFlickrPhotos = (data) ->
     itemTitle = "no title" if itemTitle == ""
     photoPath = "https://farm#{item.farm}.static.flickr.com/#{item.server}/#{item.id}_#{item.secret}_b.jpg"
 
-    $("#flickr-box")[0].style.visibility = "visible"
-    $("#flickr-license")[0].innerHTML = '<a href="' + itemLink + '">' + itemTitle + '</a>'
+    $("#flickr-box").css("visibility", "visible")
+    $("#flickr-license").html('<a href="' + itemLink + '">' + itemTitle + '</a>')
     $.backstretch(photoPath, {fade: 1000})
 
 $ ->
+  # flickrから景色の画像で、ライセンスがCC BY 2.0のもののURLを50個得る
   $.ajax
     type : 'GET'
     url : 'https://www.flickr.com/services/rest/'

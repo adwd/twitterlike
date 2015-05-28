@@ -20,7 +20,10 @@ object Tweets extends Controller with AuthElement with AuthConfigImplHtml {
   case class TweetForm(tweet: String, memberId: String)
 
   val tweetForm = Form(
-    mapping("tweet" -> text(maxLength = 140), "memberId" -> text)(TweetForm.apply)(TweetForm.unapply)
+    mapping(
+      "tweet" -> text.verifying("140文字以内でツイートしてください", _.length <= 140),
+      "memberId" -> text
+    )(TweetForm.apply)(TweetForm.unapply)
   )
 
   def main = StackAction(AuthorityKey -> NormalUser) { implicit request =>
