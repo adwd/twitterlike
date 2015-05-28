@@ -109,15 +109,6 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
     Ok(Json.toJson(recommends))
   }
 
-  case class MemberData(name: String, pass: String, mail: String)
-  val memberDataConstraints = Form(
-    mapping(
-      "name" -> nonEmptyText.verifying("user name must be less than 30 characters", _.length < 30),
-      "pass" -> nonEmptyText,
-      "mail" -> email.verifying("Email address must be less than 40 characters", _.length <= 40)
-    )(MemberData.apply)(MemberData.unapply)
-  )
-
   def create = DBAction.transaction(parse.json) { implicit request =>
     def isMemberNameUnique(name: String): Either[String, String] = {
       MemberTable
@@ -127,9 +118,24 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
         .toLeft("user name available")
     }
 
-    def memberDataValidate(n: String, p: String, m: String): Either[String, String] = {
-      memberDataConstraints.bind(Map("name" -> n, "pass" -> p, "mail" -> m)).fold(
-        error => Left(error.errors.map(_.message).mkString(", ")),
+    def memberDataValidate(n: String, m: String, p: String): Either[String, String] = {
+      val registerJson = Json.toJson(
+        Map(
+          "name" -> Json.toJson(n),
+          "mail" -> Json.toJson(m),
+          "password" -> Json.toJson(
+            Map(
+              "main" -> Json.toJson(p),
+              "confirm" -> Json.toJson(p)
+            )
+          )
+        )
+      )
+      registerForm.bind(registerJson).fold(
+        error => {
+          val formerr = error.errors.head
+          Left(s"error at field: ${formerr.key}, error messages: ${formerr.messages.mkString(", ")}" )
+        },
         form => Right(n))
     }
 
@@ -141,7 +147,7 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
       password  <- values(1).toRight("invalid json. path 'password' required.").right
       mail      <- values(2).toRight("invalid json. path 'mail' required.").right
       _         <- isMemberNameUnique(name).right
-      _         <- memberDataValidate(name, password, mail).right
+      _         <- memberDataValidate(name, mail, password).right
     } yield {
       val timestamp = new Timestamp(System.currentTimeMillis())
       val user = MemberTableRow(name, hashpw(password, gensalt()), mail, timestamp, timestamp)

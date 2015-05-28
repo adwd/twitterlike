@@ -44,12 +44,35 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
 
   case class RegisterForm(name: String, mail: String, password: String)
 
+  object EMail {
+    def unapply(str: String): Option[String] = {
+      val parts = str split "@"
+      if(parts.length == 2){
+        val domain = parts(1) split '.'
+        if(domain.length >= 2 &&
+           parts(0).matches("""[a-zA-Z0-9-_]+""") &&
+           domain.forall(_.matches("""[a-z]{2,}"""))){
+            return Some(str)
+        }
+      }
+      None
+    }
+  }
+
   val registerForm = Form(
     mapping(
-      "name" -> nonEmptyText(maxLength = 30),
-      "mail" -> email.verifying("40文字までのメールアドレスを入力してください", mail => mail.length < 40),
-      "password" -> tuple("main" -> nonEmptyText(minLength = 2, maxLength = 20), "confirm" -> text).verifying(
-        "Passwords don't match", passwords => passwords._1 == passwords._2
+      "name" -> text
+        .verifying("16文字までの名前を入力してください", n => !n.isEmpty && n.length <= 16)
+        .verifying("英数字、ハイフン、アンダーバーのみ使用できます", _.matches("""[a-zA-Z0-9_]+""")),
+      "mail" -> text
+        .verifying("40文字までのメールアドレスを入力してください", m => !m.isEmpty && m.length < 40)
+        .verifying("不正なE-mailアドレスです", m => EMail.unapply(m) != None),
+      "password" ->
+          tuple(
+            "main" -> text
+              .verifying("2文字以上 20文字までのパスワードを入力してください", p => p.length >= 2 && p.length <= 20),
+            "confirm" -> text
+          ).verifying("パスワードが一致しません", pw => pw._1 == pw._2
       )
     ){ (name, mail, passwords) => RegisterForm(name, mail, passwords._1)}
     { form => Some(form.name, form.mail, (form.password, form.password))}
