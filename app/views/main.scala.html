@@ -24,7 +24,19 @@
     </head>
     <body>
         @parts.header()
-        @content
-        @parts.footer()
+        <div class="row">
+            <div class="col-md-1"></div>
+            <div class="col-md-10">
+                @content
+            </div>
+            <div class="col-md-1"></div>
+        </div>
+        <div class="row">
+            <div class="col-md-1"></div>
+            <div class="col-md-10">
+                @parts.footer()
+            </div>
+            <div class="col-md-1"></div>
+        </div>
     </body>
 </html>

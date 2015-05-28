@@ -53,7 +53,7 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
         }),
       "mail" -> text
         .verifying("40文字までのメールアドレスを入力してください", m => !m.isEmpty && m.length < 40)
-        .verifying("不正なE-mailアドレスです", _.matches("[\\w\\d_-]+@[\\w\\d_-]+\\.[\\w\\d._-]+")),
+        .verifying("不正なE-mailアドレスです", _.matches("[\\w\\d_-]+@[\\w\\d_-]{2,}\\.[\\w\\d._-]{2,}")),
       "password" ->
           tuple(
             "main" -> text
