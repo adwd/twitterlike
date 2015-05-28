@@ -37,36 +37,23 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
       MemberTable
         .filter(_.memberId === loginForm.name)
         .firstOption
-        .map(member => checkpw(loginForm.password, member.encryptedPassword))
-        .getOrElse(false)
+        .fold(false)(member => checkpw(loginForm.password, member.encryptedPassword))
     }
   }
 
   case class RegisterForm(name: String, mail: String, password: String)
 
-  object EMail {
-    def unapply(str: String): Option[String] = {
-      val parts = str split "@"
-      if(parts.length == 2){
-        val domain = parts(1) split '.'
-        if(domain.length >= 2 &&
-           parts(0).matches("""[a-zA-Z0-9-_]+""") &&
-           domain.forall(_.matches("""[a-z]{2,}"""))){
-            return Some(str)
-        }
-      }
-      None
-    }
-  }
-
   val registerForm = Form(
     mapping(
       "name" -> text
         .verifying("16文字までの名前を入力してください", n => !n.isEmpty && n.length <= 16)
-        .verifying("英数字、ハイフン、アンダーバーのみ使用できます", _.matches("""[a-zA-Z0-9_]+""")),
+        .verifying("英数字、ハイフン、アンダーバーのみ使用できます", _.matches("""[a-zA-Z0-9_]+"""))
+        .verifying("既に使われているユーザー名です", name => DB.withSession{ implicit session =>
+          !MemberTable.filter(_.memberId === name).exists.run
+        }),
       "mail" -> text
         .verifying("40文字までのメールアドレスを入力してください", m => !m.isEmpty && m.length < 40)
-        .verifying("不正なE-mailアドレスです", m => EMail.unapply(m) != None),
+        .verifying("不正なE-mailアドレスです", _.matches("[\\w\\d_-]+@[\\w\\d_-]+\\.[\\w\\d._-]+")),
       "password" ->
           tuple(
             "main" -> text
