@@ -25,8 +25,8 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
 
   val loginForm = Form(
     mapping(
-      "name" -> nonEmptyText,
-      "password" -> nonEmptyText
+      "name" -> text,
+      "password" -> text
     )(LoginForm.apply)(LoginForm.unapply) verifying("ユーザー名またはパスワードが違います", form => form match {
       case login => validate(login)
     })
