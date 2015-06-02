@@ -1,28 +1,26 @@
 @()
 
-<script src="@routes.Assets.at("javascripts/canvas.js")" type="text/javascript"></script>
-
-<div class="row" id="tegaki-content">
-    <div class="col-md-2"></div>
-    <div class="col-md-8">
-        <div style="float:left;">
-            <canvas id="canvas" width="300" height="300"></canvas>
-        </div>
-        <div style="float:left;">
-            <table>
-                <tbody>
-                    <tr id="moji1"></tr>
-                    <tr id="moji2"></tr>
-                    <tr id="moji3"></tr>
-                    <tr id="moji4"></tr>
-                    <tr id="moji5"></tr>
-                </tbody>
-            </table>
-        </div>
-        <div style="clear:both;">
-            <input type="text" class="textarea"/>
-        </div>
-        <button class="btn-clear" id="tegaki-clear">クリア</button>
+<div id="modal-content">
+    <div style="float:left;">
+        <canvas id="canvas" width="300" height="300"></canvas>
     </div>
-    <div class="col-md-2"></div>
+    <div style="float:left;">
+        <table>
+            <tbody>
+                <tr id="moji1"></tr>
+                <tr id="moji2"></tr>
+                <tr id="moji3"></tr>
+                <tr id="moji4"></tr>
+                <tr id="moji5"></tr>
+            </tbody>
+        </table>
+    </div>
+    <div style="clear:both;">
+        <input type="text" class="textarea" id="tegaki-text"/>
+    </div>
+    <button class="btn-clear" id="tegaki-clear">文字をクリア</button>
+    <p><a id="modal-save" class="button-link">保存して閉じる</a></p>
+    <p><a id="modal-close" class="button-link">キャンセル</a></p>
 </div>
+
+<div id="modal-overlay"></div>
