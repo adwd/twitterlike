@@ -11,20 +11,25 @@
 
             <div class="box">
 
-            @form(action = routes.Tweets.tweet()) {
-                <fieldset>
-                    <div class="row">
-                        <div class="form-group col-md-9">
-                            @textarea(tweetForm("tweet"), 'label -> "つぶやく", 'id -> "tweetarea", 'class -> "tweetarea", 'rows -> "5")
-                            <input type="hidden" value="@tweetForm("memberId").value" name="memberId" />
-                            <div id="tweetcount">0</div>
+                @form(action = routes.Tweets.tweet()) {
+                    <fieldset>
+                        <div class="row">
+                            <div class="form-group col-md-9">
+                                @textarea(tweetForm("tweet"), 'label -> "つぶやく", 'id -> "tweetarea", 'class -> "tweetarea", 'rows -> "5")
+                                <input type="hidden" value="@tweetForm("memberId").value" name="memberId" />
+                                <div id="tweetcount">0</div>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="submit" value="送信" class="btn btn-success" id="button-tweet"/>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <input type="submit" value="送信" class="btn btn-success" id="button-tweet"/>
-                        </div>
-                    </div>
-                </fieldset>
-            }
+                    </fieldset>
+                }
+
+                @form(action = routes.Tweets.tegaki()) {
+                    <input type="submit" value="手書き" class="btn btn-success" id="button-tegaki"/>
+                }
+
             </div>
 
             <div class="box">

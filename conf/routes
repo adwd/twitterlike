@@ -15,6 +15,7 @@ POST        /logout                  controllers.Application.logout
 POST        /tweet                   controllers.Tweets.tweet
 POST        /follow/:id              controllers.Application.follow(id: String)
 POST        /unfollow/:id            controllers.Application.unfollow(id: String)
+GET         /tegaki                  controllers.Tweets.tegaki
 
 # Map static resources from the /public folder to the /assets URL path
 GET         /assets/*file            controllers.Assets.at(path="/public", file)
@@ -29,3 +30,4 @@ POST        /api/logout              controllers.Api.logout
 POST        /api/tweet               controllers.Api.tweet
 GET         /api/recommends          controllers.Api.recommends
 POST        /api/create              controllers.Api.create
+POST        /api/moji                controllers.Api.moji

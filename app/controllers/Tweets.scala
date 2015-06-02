@@ -76,4 +76,8 @@ object Tweets extends Controller with AuthElement with AuthConfigImplHtml {
     TweetTable.insert(tweet)
     Redirect(routes.Tweets.main())
   }
+
+  def tegaki = StackAction(AuthorityKey -> NormalUser){ req =>
+    Ok(views.html.tegaki())
+  }
 }

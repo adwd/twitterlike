@@ -21,6 +21,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.Play.current
 import controllers.Application._
 
+import scala.util.Random
+
 object Api extends Controller with LoginLogout with AuthElement with AuthConfigImplJson {
 
   implicit val tweetWrites = Json.writes[TweetTableRow]
@@ -163,5 +165,28 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
       .fold(
         errorMessage => BadRequest(errorMessage),
         memberName => Await.result(gotoLoginSucceeded(memberName), Duration.Inf))
+  }
+
+  case class hissekiPoint(c: Int, x: Int, y: Int)
+  implicit val hissekiReads = Reads.seq(Json.reads[hissekiPoint])
+
+  case class zinniaResult(char: String, score: Float)
+  implicit val resultWrites = Writes.seq(Json.writes[zinniaResult])
+
+  def moji = StackAction(parse.json, AuthorityKey -> NormalUser) { implicit req =>
+    val hisseki = req.body.asOpt[Seq[hissekiPoint]]
+
+    hisseki.fold(BadRequest(Json.toJson("post moji failed.")))(
+      success => Ok(Json.toJson(ninshiki(success)))
+    )
+  }
+
+  def ninshiki(hisseki: Seq[hissekiPoint]): Seq[zinniaResult] = {
+    val r = new Random
+    val str = "おはよう日本納期厳守"
+
+    str
+      .map(c => zinniaResult(c.toString, r.nextFloat()))
+      .sortBy(_.score)
   }
 }
