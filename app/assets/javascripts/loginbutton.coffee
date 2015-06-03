@@ -13,5 +13,5 @@ $ ->
   Rx.Observable.combineLatest(streams[0], streams[1], (s1, s2) ->
     {'name': s1, 'pass': s2}
   ).subscribe( (x) ->
-    $('#login-button').prop("disabled", x.name == 0 || x.pass < 2)
+    $('#login-button').prop("disabled", x.name == 0 || x.pass < 8)
   )

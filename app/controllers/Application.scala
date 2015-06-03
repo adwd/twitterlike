@@ -68,8 +68,8 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
       "password" ->
           tuple(
             "main" -> text
-              .verifying("2文字以上 20文字までのパスワードを入力してください",
-                p => p.length >= 2 && p.length <= 20
+              .verifying("8文字以上 20文字までのパスワードを入力してください",
+                p => p.length >= 8 && p.length <= 20
               ),
             "confirm" -> text
           ).verifying("パスワードが一致しません",
