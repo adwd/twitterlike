@@ -61,7 +61,10 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
         )
         .verifying("不正なE-mailアドレスです",
           _.matches("[\\w\\d_-]+@[\\w\\d_-]{2,}\\.[\\w\\d._-]{2,}")
-        ),
+        )
+        .verifying("既に使われているメールアドレスです", mailaddress => DB.withSession{
+          implicit session => !MemberTable.filter(_.mailAddress === mailaddress).exists.run
+        }),
       "password" ->
           tuple(
             "main" -> text
@@ -71,8 +74,8 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
             "confirm" -> text
           ).verifying("パスワードが一致しません",
               pw => pw._1 == pw._2
-      )
-    ){ (name, mail, passwords) =>RegisterForm(name, mail, passwords._1)}
+          )
+    ){ (name, mail, passwords) => RegisterForm(name, mail, passwords._1)}
     { form => Some(form.name, form.mail, (form.password, form.password))}
   )
 
