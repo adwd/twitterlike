@@ -88,7 +88,7 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
       .map(user => Tweets.showTweets(user))
       .getOrElse{
         val recents = DB.withSession { implicit session =>
-          TweetTable.sortBy(_.timestampCreated).take(10).list
+          TweetTable.sortBy(_.timestampCreated.desc).take(10).list
         }
         Ok(views.html.index(loginForm, recents))
       }
@@ -98,9 +98,9 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
    * デバッグ表示、テーブルをすべて出力する
    */
   def debug = DBAction.transaction { implicit rs =>
-    val members = MemberTable.sortBy(_.timestampCreated).list
-    val tweets = TweetTable.sortBy(_.timestampCreated).list
-    val follows = FollowTable.sortBy(_.timestampCreated).list
+    val members = MemberTable.sortBy(_.timestampCreated.desc).list
+    val tweets = TweetTable.sortBy(_.timestampCreated.desc).list
+    val follows = FollowTable.sortBy(_.timestampCreated.desc).list
 
     Ok(views.html.debug(members, tweets, follows))
   }
@@ -133,7 +133,7 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
   }
 
   def login = DBAction.transaction { implicit rs =>
-    val recents = TweetTable.sortBy(_.timestampCreated).take(10).list
+    val recents = TweetTable.sortBy(_.timestampCreated.desc).take(10).list
     Ok(views.html.index(loginForm, recents))
   }
 
@@ -145,7 +145,7 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
     loginForm.bindFromRequest.fold(
       error => {
         val recents = DB.withSession { implicit session =>
-          TweetTable.sortBy(_.timestampCreated).take(10).list
+          TweetTable.sortBy(_.timestampCreated.desc).take(10).list
         }
         Future.successful(BadRequest(views.html.index(error, recents)))
       },

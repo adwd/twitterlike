@@ -51,7 +51,7 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
   }
 
   def recents = DBAction { implicit session =>
-    val tweets = TweetTable.sortBy(_.timestampCreated).take(10).list
+    val tweets = TweetTable.sortBy(_.timestampCreated.desc).take(10).list
     Ok(Json.toJson(tweets))
   }
 

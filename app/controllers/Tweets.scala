@@ -54,6 +54,7 @@ object Tweets extends Controller with AuthElement with AuthConfigImplHtml {
         .filter(tweet => tweet.memberId === user.memberId ||
                          followings.map(_.followedId).filter(tweet.memberId === _).exists
         )
+        .sortBy(_.timestampCreated.desc)
         .list
 
       val recommends = members
