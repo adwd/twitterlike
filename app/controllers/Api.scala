@@ -51,13 +51,13 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
   }
 
   def recents = DBAction { implicit session =>
-    val tweets = TweetTable.sortBy(_.timestampCreated.desc).take(10).list
+    val tweets = TweetTable.sortBy(_.timestampCreated).take(10).list
     Ok(Json.toJson(tweets))
   }
 
   def tweets = StackAction(AuthorityKey -> NormalUser) { implicit request =>
     val (tw, _, _) = tweetImpl(loggedIn)
-    Ok(Json.toJson(tw))
+    Ok(Json.toJson(tw.reverse))
   }
 
   def follow(name: String) = StackAction(AuthorityKey -> NormalUser) { implicit req =>
@@ -109,7 +109,7 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
         val tweet = TweetTableRow(0, Some(text), loggedIn.memberId, timestamp, timestamp)
         DB.withSession(implicit session => TweetTable.insert(tweet))
         val (tw, _, _) = tweetImpl(loggedIn)
-        Ok(Json.toJson(tw))
+        Ok(Json.toJson(tw.reverse))
       }
   }
 
