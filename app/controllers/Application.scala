@@ -50,7 +50,7 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
           n => !n.isEmpty && n.length <= 16
         )
         .verifying("英数字、ハイフン、アンダーバーのみ使用できます",
-          _.matches("""[a-zA-Z0-9_]+""")
+          _.matches("""[a-zA-Z0-9_\-]+""")
         )
         .verifying("既に使われているユーザー名です", name => DB.withSession{
           implicit session => !MemberTable.filter(_.memberId === name).exists.run
