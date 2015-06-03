@@ -31,14 +31,13 @@ object Tweets extends Controller with AuthElement with AuthConfigImplHtml {
   }
 
   def showTweets[T](user: MemberTableRow)(implicit request: Request[T]) = {
-      val (tw, rec, fl) = tweetImpl(user)
-      Ok(views.html.tweets(user, tw, rec, fl, tweetForm.fill(TweetForm("", user.memberId))))
+    val (tw, rec, fl) = tweetImpl(user)
+    Ok(views.html.tweets(user, tw, rec, fl, tweetForm.fill(TweetForm("", user.memberId))))
   }
 
   def tweetImpl(user: User) = {
     DB.withSession { implicit session =>
-      // TODO: ちゃんとしたSQLクエリにするとか
-
+      // TODO: ちゃんとしたSQLクエリにする
       val followings = for {
         follow <- FollowTable
         if follow.memberId === user.memberId
@@ -52,7 +51,9 @@ object Tweets extends Controller with AuthElement with AuthConfigImplHtml {
       }
 
       val tweets = TweetTable
-        .filter(tweet => tweet.memberId === user.memberId || followings.map(_.followedId).filter(tweet.memberId === _).exists)
+        .filter(tweet => tweet.memberId === user.memberId ||
+                         followings.map(_.followedId).filter(tweet.memberId === _).exists
+        )
         .list
 
       val recommends = members
@@ -70,10 +71,14 @@ object Tweets extends Controller with AuthElement with AuthConfigImplHtml {
   }
 
   def tweet = DBAction { implicit request =>
-    val form = tweetForm.bindFromRequest
-    val timestamp = new Timestamp(System.currentTimeMillis())
-    val tweet = TweetTableRow(0, Some(form.get.tweet), form.get.memberId, timestamp, timestamp)
-    TweetTable.insert(tweet)
-    Redirect(routes.Tweets.main())
+    tweetForm.bindFromRequest.fold(
+      error => BadRequest("BAD"),
+      form => {
+        val timestamp = new Timestamp(System.currentTimeMillis())
+        val tweet = TweetTableRow(0, Some(form.tweet), form.memberId, timestamp, timestamp)
+        TweetTable.insert(tweet)
+        Redirect(routes.Tweets.main())
+      }
+    )
   }
 }

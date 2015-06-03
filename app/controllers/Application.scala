@@ -46,22 +46,33 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
   val registerForm = Form(
     mapping(
       "name" -> text
-        .verifying("16文字までの名前を入力してください", n => !n.isEmpty && n.length <= 16)
-        .verifying("英数字、ハイフン、アンダーバーのみ使用できます", _.matches("""[a-zA-Z0-9_]+"""))
-        .verifying("既に使われているユーザー名です", name => DB.withSession{ implicit session =>
-          !MemberTable.filter(_.memberId === name).exists.run
+        .verifying("16文字までの名前を入力してください",
+          n => !n.isEmpty && n.length <= 16
+        )
+        .verifying("英数字、ハイフン、アンダーバーのみ使用できます",
+          _.matches("""[a-zA-Z0-9_]+""")
+        )
+        .verifying("既に使われているユーザー名です", name => DB.withSession{
+          implicit session => !MemberTable.filter(_.memberId === name).exists.run
         }),
       "mail" -> text
-        .verifying("40文字までのメールアドレスを入力してください", m => !m.isEmpty && m.length < 40)
-        .verifying("不正なE-mailアドレスです", _.matches("[\\w\\d_-]+@[\\w\\d_-]{2,}\\.[\\w\\d._-]{2,}")),
+        .verifying("40文字までのメールアドレスを入力してください",
+          m => !m.isEmpty && m.length < 40
+        )
+        .verifying("不正なE-mailアドレスです",
+          _.matches("[\\w\\d_-]+@[\\w\\d_-]{2,}\\.[\\w\\d._-]{2,}")
+        ),
       "password" ->
           tuple(
             "main" -> text
-              .verifying("2文字以上 20文字までのパスワードを入力してください", p => p.length >= 2 && p.length <= 20),
+              .verifying("2文字以上 20文字までのパスワードを入力してください",
+                p => p.length >= 2 && p.length <= 20
+              ),
             "confirm" -> text
-          ).verifying("パスワードが一致しません", pw => pw._1 == pw._2
+          ).verifying("パスワードが一致しません",
+              pw => pw._1 == pw._2
       )
-    ){ (name, mail, passwords) => RegisterForm(name, mail, passwords._1)}
+    ){ (name, mail, passwords) =>RegisterForm(name, mail, passwords._1)}
     { form => Some(form.name, form.mail, (form.password, form.password))}
   )
 
@@ -70,14 +81,14 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
    * @return
    */
   def index = StackAction { implicit request =>
-    if(loggedIn.isDefined)
-      Tweets.showTweets(loggedIn.get)
-    else {
-      val recents = DB.withSession { implicit session =>
-        TweetTable.sortBy(_.timestampCreated).take(10).list
+    loggedIn
+      .map(user => Tweets.showTweets(user))
+      .getOrElse{
+        val recents = DB.withSession { implicit session =>
+          TweetTable.sortBy(_.timestampCreated).take(10).list
+        }
+        Ok(views.html.index(loginForm, recents))
       }
-      Ok(views.html.index(loginForm, recents))
-    }
   }
 
   /**
@@ -107,7 +118,11 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
       form => {
         // ユーザを登録
         val timestamp = new Timestamp(System.currentTimeMillis())
-        val user = MemberTableRow(form.name, hashpw(form.password, gensalt()), form.mail, timestamp, timestamp)
+        val user = MemberTableRow(form.name,
+                                  hashpw(form.password, gensalt()),
+                                  form.mail,
+                                  timestamp,
+                                  timestamp)
         MemberTable.insert(user)
         Await.result(gotoLoginSucceeded(form.name), Duration.Inf)
       }
@@ -126,10 +141,10 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
   def authenticate = Action.async { implicit request =>
     loginForm.bindFromRequest.fold(
       error => {
-        DB.withSession { implicit session =>
-          val recents = TweetTable.sortBy(_.timestampCreated).take(10).list
-          Future.successful(BadRequest(views.html.index(error, recents)))
+        val recents = DB.withSession { implicit session =>
+          TweetTable.sortBy(_.timestampCreated).take(10).list
         }
+        Future.successful(BadRequest(views.html.index(error, recents)))
       },
       form => gotoLoginSucceeded(form.name)
     )
@@ -138,7 +153,9 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
   def follow(id: String) = StackAction { implicit request =>
     loggedIn.fold(BadRequest("NG")){ user =>
       DB.withSession { implicit session =>
-        if(MemberTable.filter(_.memberId === id).exists.run && !FollowTable.filter(flw => flw.memberId === user.memberId && flw.followedId === id).exists.run) {
+        if(MemberTable.filter(_.memberId === id).exists.run &&
+          !FollowTable.filter(flw => flw.memberId === user.memberId &&
+                                     flw.followedId === id).exists.run) {
           val timestamp = new Timestamp(System.currentTimeMillis())
           val follow = FollowTableRow(0, id, user.memberId, timestamp ,timestamp)
           FollowTable.insert(follow)
@@ -157,17 +174,19 @@ object Application extends Controller with LoginLogout with OptionalAuthElement 
           .filter(_.memberId === id)
           .firstOption
           .fold(BadRequest(s"$user is not exist.")){ x =>
-            val ret = FollowTable
+            val deletedCount = FollowTable
               .filter(f => f.memberId === user.memberId &&
-                           f.followedId === id)
+                           f.followedId === id
+              )
               .delete
-            if (ret != 0) {
-              Ok("unfollow success")
-            } else {
+            if (deletedCount == 0) {
               BadRequest(s"you are not following $id")
+            } else {
+              Ok("unfollow success")
             }
         }
-      })
+      }
+    )
   }
 
 }

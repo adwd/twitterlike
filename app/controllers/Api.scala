@@ -30,15 +30,17 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
   implicit val memberWrites = Json.writes[MemberTableRow]
 
   def loginValidate(jsValue: JsValue): JsResult[LoginForm] = {
-    loginReads.reads(jsValue).map( form =>
-      DB.withSession{ implicit session =>
+    loginReads.reads(jsValue).fold(
+      invalid => JsError(Seq()),
+      form => DB.withSession{ implicit session =>
         MemberTable
           .filter(_.memberId === form.name)
           .firstOption
           .find(member => checkpw(form.password, member.encryptedPassword))
           .map(member => JsSuccess(form))
           .getOrElse(JsError(Seq()))
-    }).getOrElse(JsError(Seq()))
+      }
+    )
   }
 
   def authenticate = Action.async(BodyParsers.parse.json) { implicit request =>
@@ -68,27 +70,27 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
             .filter(_.memberId === loggedIn.memberId)
             .filter(_.followedId === name)
             .firstOption
-            .fold{
+            .map(member => BadRequest(s"you already followed user: $name"))
+            .getOrElse{
               val timestamp = new Timestamp(System.currentTimeMillis())
               val follow = FollowTableRow(0, name, loggedIn.memberId, timestamp, timestamp)
               FollowTable.insert(follow)
               Ok(s"followed $name")
-          }(member => BadRequest(s"you already followed user: $name"))
+            }
         )
     }
   }
 
   def unfollow(name: String) = StackAction(AuthorityKey -> NormalUser) { implicit req =>
-    val ret = DB.withSession( implicit session =>
+    val deletedCount = DB.withSession( implicit session =>
       FollowTable
         .filter(x => x.followedId === name && x.memberId === loggedIn.memberId)
-        // delete: Intの戻り値でdeleteを実行すると削除されたカラムの数を返す？
         .delete
     )
-    if(ret != 0){
-      Ok(s"you unfollowed user: $name")
-    } else {
+    if(deletedCount == 0){
       BadRequest(s"you are not following, or user: $name is not exist")
+    } else {
+      Ok(s"you unfollowed user: $name")
     }
   }
 
@@ -100,14 +102,15 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
     req.body.\("text").asOpt[String]
       .filter(_.length <= 140)
       .fold(
-        BadRequest("tweet failed. tweet too long ( > 140) or 'text' path does not exist in body json"))
+        BadRequest("tweet failed. tweet too long ( > 140) or 'text' path does not exist in body json")
+      )
       { text =>
         val timestamp = new Timestamp(System.currentTimeMillis())
         val tweet = TweetTableRow(0, Some(text), loggedIn.memberId, timestamp, timestamp)
         DB.withSession(implicit session => TweetTable.insert(tweet))
         val (tw, _, _) = tweetImpl(loggedIn)
         Ok(Json.toJson(tw))
-    }
+      }
   }
 
   def recommends = StackAction(AuthorityKey -> NormalUser) { implicit req =>
@@ -116,7 +119,7 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
   }
 
   def create = DBAction.transaction(parse.json) { implicit request =>
-    def isMemberNameUnique(name: String): Either[String, String] = {
+    def eitherMemberNameUnique(name: String): Either[String, String] = {
       MemberTable
         .filter(_.memberId === name)
         .firstOption
@@ -124,7 +127,8 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
         .toLeft("user name available")
     }
 
-    def memberDataValidate(n: String, m: String, p: String): Either[String, String] = {
+    // Application#registerFormのバリデーションを使う
+    def eitherMemberDataValid(n: String, m: String, p: String): Either[String, String] = {
       val registerJson = Json.toJson(
         Map(
           "name" -> Json.toJson(n),
@@ -152,8 +156,8 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
       name      <- values(0).toRight("invalid json. path 'name' required.").right
       password  <- values(1).toRight("invalid json. path 'password' required.").right
       mail      <- values(2).toRight("invalid json. path 'mail' required.").right
-      _         <- isMemberNameUnique(name).right
-      _         <- memberDataValidate(name, mail, password).right
+      _         <- eitherMemberNameUnique(name).right
+      _         <- eitherMemberDataValid(name, mail, password).right
     } yield {
       val timestamp = new Timestamp(System.currentTimeMillis())
       val user = MemberTableRow(name, hashpw(password, gensalt()), mail, timestamp, timestamp)
@@ -182,6 +186,8 @@ object Api extends Controller with LoginLogout with AuthElement with AuthConfigI
   }
 
   def ninshiki(hisseki: Seq[hissekiPoint]): Seq[zinniaResult] = {
+    // TODO:文字認識の実装
+    // 間に合わないのでランダムに文字列とスコアを混ぜて返す
     val r = new Random
     val str = "おはよう日本納期厳守"
 
